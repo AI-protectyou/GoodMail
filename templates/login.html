@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Good Mail 로그인</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/styles.css">
+    <link rel="stylesheet" href="../static/css/pretendard.css">
+    <script src="https://cdn.rawgit.com/travist/jsencrypt/master/bin/jsencrypt.min.js"></script>
+<script>
+    let publicKey;
+
+    // 페이지 로드 시 공개키 요청
+    window.onload = async function() {
+        const response = await fetch('/get_public_key');
+        publicKey = await response.text();
+    };
+
+    async function encryptData() {
+        if (!publicKey) {
+            alert("공개키를 로드하는 데 실패했습니다.");
+            return;
+        }
+        const email = document.getElementsByName('useremail')[0].value;
+        const password = document.getElementsByName('password')[0].value;
+
+        const encryptor = new JSEncrypt();
+        encryptor.setPublicKey(publicKey);
+
+        // 데이터 암호화 - 공개키 암호화, base64 인코딩
+        const encryptedEmail = encryptor.encrypt(email);
+        const encryptedPassword = encryptor.encrypt(password);
+
+        // 암호화된 데이터를 숨겨진 필드에 설정
+        document.getElementById('encryptedEmail').value = encryptedEmail;
+        document.getElementById('encryptedPassword').value = encryptedPassword;
+
+        // 원래 데이터는 숨김 처리
+        document.getElementsByName('useremail')[0].value = '';
+        document.getElementsByName('password')[0].value = '';
+
+        // 암호화 후 폼 제출
+        document.forms[0].submit(); // 첫 번째 폼 제출
+    }
+</script>
+</head>
+
+<body>
+    <div class="posi_center">
+        <header id="header_big">
+            <div>AI 기반 스팸메일 차단 및 통합 이메일 관리 서비스</div>
+            <img src="../static/images/logo.png" alt="로고" />
+        </header>
+        <div id="login_panel">
+            <form action="/login" method="POST" onsubmit="encryptData()">
+            <select name="service_provider" required>>
+                <option value="" selected disabled hidden>로그인할 메일 플랫폼을 고르시오.</option>
+                <option value="NAVER">Naver</option>
+                <option value="GMAIL">Gmail</option>
+                <option value="DAUM">Daum</option>
+            </select>
+            <h1>로그인</h1>
+            <div id="id_pass_input">
+                <input type="text" name="useremail" placeholder="ID" required><br>
+                <input type="password" name="password" placeholder="PASSWORD" required>
+                <!-- 암호화된 값을 전송하기 위한 숨겨진 입력 필드 -->
+                <input type="hidden" name="encrypted_email" id="encryptedEmail">
+                <input type="hidden" name="encrypted_password" id="encryptedPassword">
+            </div>
+
+            <input class="button" type="submit" value="로그인">
+            </form>
+        </div>
+    </div>
+
+{% if login_fail %}
+    <script>
+        alert("{{ login_fail }}");
+    </script>
+{% endif %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <script type="text/javascript">
+            {% for category, message in messages %}
+                alert("{{ message }}");
+            {% endfor %}
+        </script>
+    {% endif %}
+{% endwith %}
+
+</body>
+</html>

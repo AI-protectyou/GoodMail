@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <title>로그인</title>
+<script src="https://cdn.rawgit.com/travist/jsencrypt/master/bin/jsencrypt.min.js"></script>
+<script>
+    let publicKey;
+
+    // 페이지 로드 시 공개키 요청
+    window.onload = async function() {
+        const response = await fetch('/get_public_key');
+        publicKey = await response.text();
+    };
+
+    async function encryptData() {
+        if (!publicKey) {
+            alert("공개키를 로드하는 데 실패했습니다.");
+            return;
+        }
+        const email = document.getElementsByName('useremail')[0].value;
+        const password = document.getElementsByName('password')[0].value;
+
+        const encryptor = new JSEncrypt();
+        encryptor.setPublicKey(publicKey);
+
+        // 데이터 암호화 - 공개키 암호화, base64 인코딩
+        const encryptedEmail = encryptor.encrypt(email);
+        const encryptedPassword = encryptor.encrypt(password);
+
+        // 암호화된 데이터를 숨겨진 필드에 설정
+        document.getElementById('encryptedEmail').value = encryptedEmail;
+        document.getElementById('encryptedPassword').value = encryptedPassword;
+
+        // 원래 데이터는 숨김 처리
+        document.getElementsByName('useremail')[0].value = '';
+        document.getElementsByName('password')[0].value = '';
+
+    }
+</script>
+</head>
+<body>
+    <div class="login-container">
+        <h2>이메일 로그인</h2>
+        <form action="/login" method="POST" onsubmit="encryptData()">
+            <select name="service_provider" required>
+                <option value="naver">Naver</option>
+                <option value="daum">Daum</option>
+                <option value="gmail">Gmail</option>
+            </select>
+            <input type="email" name="useremail" placeholder="이메일 주소" required>
+            <input type="password" name="password" placeholder="비밀번호" required>
+            <!-- 암호화된 값을 전송하기 위한 숨겨진 입력 필드 -->
+            <input type="hidden" name="encrypted_email" id="encryptedEmail">
+            <input type="hidden" name="encrypted_password" id="encryptedPassword">
+            <button type="submit">로그인</button>
+        </form>
+    </div>
+{% if login_fail %}
+    <script>
+        alert("{{ login_fail }}");
+    </script>
+{% endif %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <script type="text/javascript">
+            {% for category, message in messages %}
+                alert("{{ message }}");
+            {% endfor %}
+        </script>
+    {% endif %}
+{% endwith %}
+</body>
+</html>

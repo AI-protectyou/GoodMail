@@ -1,0 +1,149 @@
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(180deg, #3747D6 0%, #1D2570 100%);
+    font-family: 'Pretendard';
+    font-weight: 400;
+    font-size: 18px;
+}
+
+.posi_center {
+    position: relative;
+    top: 15vh;
+    left: 50%;
+    transform: translate(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#header_big {
+    position: absolute;
+    margin: 0;
+    padding: 4vh 2vw;
+    left: 50%;
+    width: 29vw;
+    height: 100px;
+    transform: translateX(-50%);
+    background: #FCFCFC;
+    border-bottom: 1px solid #A0A1AD;
+    border-radius: 28px 28px 0 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#header_big div {
+    font-size: 1vw;
+    color: #595A66;
+}
+
+#header_big img {
+    padding-top: 1vh;
+}
+
+@media (min-width: 701px) {
+    #header_big img {
+        height: 6vh;
+    }
+}
+
+@media (max-width: 700px) {
+    #header_big img {
+        height: 4vh;
+    }
+}
+
+#login_panel {
+    position: absolute;
+    margin-top: 15vh;
+    width: 33vw;
+    background: #F0F0F3;
+    border-radius: 0 0 28px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 25px 0;
+    gap: 8px;
+}
+
+#login_panel * {
+    margin: 0;
+}
+
+#login_panel select,
+#login_panel input[type="text"],
+#login_panel input[type="password"],
+#login_panel input[type="button"],
+#login_panel a {
+    width: calc(25vw - 32px);
+    height: 6vh;
+    border: 0px;
+    font-family: 'Pretendard';
+}
+
+#login_panel select {
+    padding: 0 20px;
+    background: #FCFCFC;
+    border: 1px solid #595A66;
+    border-radius: 10px;
+    font-weight: bold;
+    color: #595A66;
+}
+
+#login_panel h1 {
+    font-weight: bold;
+    font-size: 130%;
+    line-height: 46px;
+    text-decoration-line: underline;
+    color: #595A66;
+}
+
+#id_pass_input {
+    height: auto;
+}
+
+#id_pass_input input {
+    box-sizing: border-box;
+    margin-bottom: 3px;
+    text-align: left;
+    padding-left: 32px;
+    color: #8484A7;
+    font-family: 'Onest', sans-serif;
+    font-weight: 600;
+    background: #FCFCFC;
+    border-radius: 1000px;
+}
+
+#login_panel a {
+    height: auto;
+    text-align: right;
+    font-weight: 600;
+    font-size: 70%;
+}
+
+.button {
+    padding: 5px;
+
+    font-family: 'Onest', sans-serif;
+    color: #595A66;
+    font-weight: bold;
+    font-size: 18px;
+
+    background: #D9D9D9;
+    border-radius: .5em;
+
+    border: none;
+    cursor: pointer;
+
+    width: auto;
+
+    padding: .5em .8em;
+
+}
+
+.button:hover {
+    background: #C4C4C4
+}
