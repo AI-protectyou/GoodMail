@@ -134,7 +134,7 @@ def read_email(imap):
         print(f'email length : {email_len}')
 
         # 최근 5개의 이메일 UID만 선택
-        recent_email_uids = email_uids[-10:]  # 마지막 n개 UID 선택
+        recent_email_uids = email_uids[-100:]  # 마지막 n개 UID 선택
 
         for email_uid in reversed(recent_email_uids):
             _, msg_data = imap.uid('fetch', email_uid, '(RFC822)')

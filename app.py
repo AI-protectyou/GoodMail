@@ -1,4 +1,6 @@
 import os
+
+import tensorflow
 from flask import Flask,jsonify, render_template, url_for, request, redirect, session, flash
 from dotenv import load_dotenv
 from datetime import timedelta
@@ -7,7 +9,12 @@ import key_loader
 import rsa_cipher
 import sqlite3
 import ssl
+import tensorflow.keras.models
+from sklearn.feature_extraction.text import TfidfVectorizer
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 
+loaded_model = tensorflow.keras.models.load_model('spam_model.h5')
 app = Flask(__name__)
 
 # 모델 로드
@@ -16,16 +23,13 @@ app = Flask(__name__)
 # Flask 앱에 secret_key 설정 (세션 암호화용)
 app.secret_key = os.getenv('SECRET_KEY', 'your_default_secret_key')  # .env 파일에서 비밀 키를 가져오거나 기본값을 사용
 
-"""# 세션 및 연결 관리 변수
 imap_connection = None
-last_login_time = None"""
-
-imap_connection = None
+vectorizer = TfidfVectorizer()  # 벡터화 도구를 전역으로 선언
 @app.route("/")
 def home():
     return render_template("login.html")
 
-"""1. 메일 보여주기 버튼, 2. 인공지능 분석 버튼"""
+"""메일 리스트"""
 @app.route("/mailbox")
 def mailbox():
     return render_template("mail_list.html")
@@ -35,7 +39,8 @@ def get_mail():
     global imap_connection
     mails = imap_email_reader.read_email(imap_connection)
     print(mails)
-    new_mails = filter_emails(mails)
+
+    new_mails = filter(mails)
     return jsonify(new_mails)
 
 # ai 코드
@@ -46,6 +51,53 @@ def filter_emails(mails):
             filtered_emails.append(email)
         else:
             print(f"Removed email: {email}")
+    return filtered_emails
+
+
+def filter(mails):
+    filtered_emails = []
+    tokenizer = Tokenizer()
+
+    """email_texts = [
+        email.get('subject', '') + " " + email.get('sender', '') + " " + email.get('sender_email', '') + " " + email.get('date', '') + " " + email.get('body', '')
+        for email in mails
+    ]"""
+
+    for email in mails:
+        email_texts = [
+            email.get('body', '') for email in mails
+        ]
+
+        email_text_encoded = tokenizer.texts_to_sequences([email_texts])
+
+        email_text_padded = pad_sequences(email_text_encoded, maxlen=189)
+
+        prediction = loaded_model.predict(email_text_padded)
+        print(f"Prediction: {prediction}")  # 예측값 확인
+
+        if prediction[0][0] < 0.2:
+            filtered_emails.append(email)
+        else:
+            print(f"Removed spam email: {email}")
+
+    """for email in mails:
+        subject = email.get('subject', '')
+        sender = email.get('sender', '')
+        sender_email = email.get('sender_email', '')
+        date = email.get('date', '')
+        body = email.get('body', '')
+        email_text = subject + " " + sender + " " + sender_email + " " + date + " " + body
+
+        email_text_vector = vectorizer.transform([email_text])
+
+        prediction = loaded_model.predict(email_text_vector)
+        print(f"Prediction: {prediction}")  # 예측값 확인
+
+        if prediction[0][0] < 0.5:  # 0.5 기준으로 분류
+            filtered_emails.append(email)
+        else:
+            print(f"Removed spam email: {email}")"""
+    print(f'filtered_emails len = {len(filtered_emails)}')
     return filtered_emails
 
 @app.route("/mail/<int:mail_id>")
