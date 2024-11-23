@@ -42,7 +42,7 @@
                 <ul><input class="button" type="button" value="새로고침 (F5)"></ul>
             </div>
             <div class="right_group">
-                <ul><input type="button" id="get_mail" value="전체 메일 보기"></ul>
+                <ul><input type="button" value="전체 메일 보기"></ul>
                 <ul><input type="button" value="AI 필터링 실행"></ul>
             </div>
         </nav>
@@ -59,29 +59,7 @@
             </div>
             <div class="text">1 / N 페이지</div>
         </div>
-    </section>
-
-<script>
-document.getElementById('get_mail').addEventListener('click', async () => {
-    console.log("button click");
-    const response = await fetch('/api/get_mail', {method: 'GET',});
-    if (response.ok) {
-        const emails = await response.json();
-        console.log(emails);
-
-        const mailsDiv = document.getElementById('mails');
-
-        emails.forEach((email) => {
-            const mailItem = document.createElement('div');
-            mailItem.textContent = email.subject;
-            mailsDiv.appendChild(mailItem);
-        });
-    }
-
-});
-
-</script>
 </body>
-
+</section>
 
 </html>

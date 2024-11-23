@@ -74,9 +74,10 @@ body {
 }
 
 #login_panel select,
-#login_panel input[type="text"],
+#login_panel input[type="email"],
 #login_panel input[type="password"],
 #login_panel input[type="button"],
+#lgoin_panel input[type="submit"],
 #login_panel a {
     width: calc(25vw - 32px);
     height: 6vh;
@@ -115,13 +116,6 @@ body {
     font-weight: 600;
     background: #FCFCFC;
     border-radius: 1000px;
-}
-
-#login_panel a {
-    height: auto;
-    text-align: right;
-    font-weight: 600;
-    font-size: 70%;
 }
 
 .button {

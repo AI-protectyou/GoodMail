@@ -89,7 +89,7 @@ body > * {
     position: absolute;
     height: calc(5vh - 15px);
     padding-left: 25px;
-    top: 50%;
+    top: 60%;
     transform: translateY(-50%);
 }
 

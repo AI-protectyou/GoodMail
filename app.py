@@ -24,6 +24,7 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'your_default_secret_key')  # .env 파일에서 비밀 키를 가져오거나 기본값을 사용
 
 imap_connection = None
+user_email = None
 vectorizer = TfidfVectorizer()  # 벡터화 도구를 전역으로 선언
 @app.route("/")
 def home():
@@ -32,8 +33,7 @@ def home():
 """메일 리스트"""
 @app.route("/mailbox")
 def mailbox():
-    return render_template("mail_list.html")
-
+    return render_template("mail_list.html", user_email=user_email)
 @app.route("/api/get_mail")
 def get_mail():
     global imap_connection
@@ -43,7 +43,7 @@ def get_mail():
     new_mails = filter(mails)
     return jsonify(new_mails)
 
-# ai 코드
+# ai 코드 예시
 def filter_emails(mails):
     filtered_emails = []
     for email in mails:
@@ -53,7 +53,7 @@ def filter_emails(mails):
             print(f"Removed email: {email}")
     return filtered_emails
 
-
+# ai 코드
 def filter(mails):
     filtered_emails = []
     tokenizer = Tokenizer()
@@ -146,6 +146,8 @@ def login(): #
             imap_connection = imap_email_reader.login_to_imap(server_name, decrypted_email, decrypted_password)
             if imap_connection:  # 로그인 성공
                 print("imap 로그인 성공!!")
+                global user_email # 추가
+                user_email = decrypted_email # 추가
                 #imap_connection.logout() # 일단 test 하려고 로그인만 확인하고 연결 끊기
                 # 이메일 목록 페이지로 리디렉션
                 return redirect(url_for('mailbox'))
@@ -156,8 +158,7 @@ def login(): #
                 return render_template("login.html", login_fail=login_fail), 401
 
     else: # GET 요청 처리: 로그인 페이지 표시
-        login_fail = '이메일 또는 비밀번호가 제공되지 않았습니다.'
-        return render_template("login.html", login_fail=login_fail), 400
+        return render_template("login.html")
 
 
 if __name__ == '__main__':
