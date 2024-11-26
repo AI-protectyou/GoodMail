@@ -7,7 +7,7 @@ from datetime import timedelta
 import imap_email_reader
 import key_loader
 import rsa_cipher
-import sqlite3
+from db_utils import get_db_connection, insert_email, create_table
 import ssl
 import tensorflow.keras.models
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -17,15 +17,14 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 loaded_model = tensorflow.keras.models.load_model('spam_model.h5')
 app = Flask(__name__)
 
-# 모델 로드
-#loaded_model = joblib.load('model.pkl')
-
 # Flask 앱에 secret_key 설정 (세션 암호화용)
 app.secret_key = os.getenv('SECRET_KEY', 'your_default_secret_key')  # .env 파일에서 비밀 키를 가져오거나 기본값을 사용
 
 imap_connection = None
 user_email = None
-vectorizer = TfidfVectorizer()  # 벡터화 도구를 전역으로 선언
+vectorizer = TfidfVectorizer()
+
+
 @app.route("/")
 def home():
     return render_template("login.html")
@@ -34,14 +33,62 @@ def home():
 @app.route("/mailbox")
 def mailbox():
     return render_template("mail_list.html", user_email=user_email)
+
+@app.route("/mail/<int:mail_id>")
+def mail(mail_id):
+    return render_template("mail_content.html", user_email=user_email)
+
+@app.route("/api/mail", methods=["GET"])
+def show_mail():
+    conn = get_db_connection()
+    emails = conn.execute('SELECT * FROM emails ORDER BY id DESC LIMIT 100').fetchall()
+    conn.close()
+
+    return jsonify([dict(email) for email in emails])
+
 @app.route("/api/get_mail")
 def get_mail():
     global imap_connection
     mails = imap_email_reader.read_email(imap_connection)
-    print(mails)
+    #print(mails)
 
-    new_mails = filter(mails)
-    return jsonify(new_mails)
+    # DB에 저장 (중복되는 메일은 저장하지 않음)
+    conn = get_db_connection()
+
+    for mail in reversed(mails):
+        uid = mail.get('uid')
+        # 중복 메일 확인
+        existing_mail = conn.execute('SELECT id FROM emails WHERE uid = ?', (uid,)).fetchone()
+        if not existing_mail:
+            # 새로운 메일을 DB에 저장
+            insert_email(
+                uid=uid,
+                subject=mail.get('subject', 'No Subject'),
+                sender=mail.get('sender', 'Unknown Sender'),
+                sender_email=mail.get('sender_email', 'Unknown Email'),
+                date=mail.get('date', 'Unknown Date'),
+                body=mail.get('body', '')
+            )
+
+    # DB에서 모든 이메일을 조회하여 반환
+    all_emails = conn.execute('SELECT * FROM emails ORDER BY id DESC').fetchall()
+    conn.close()
+
+    # 모든 이메일 데이터를 JSON 형태로 변환
+    email_list = []
+    for email in all_emails:
+        email_data = {
+            'id': email['id'],
+            'uid': email['uid'],
+            'subject': email['subject'],
+            'sender': email['sender'],
+            'sender_email': email['sender_email'],
+            'date': email['date'],
+            'body': email['body']
+        }
+        email_list.append(email_data)
+
+    return jsonify(email_list)
 
 # ai 코드 예시
 def filter_emails(mails):
@@ -63,6 +110,19 @@ def filter(mails):
         for email in mails
     ]"""
 
+    """email_texts = [email.get('body', '') for email in mails]
+
+    tokenizer.fit_on_texts(email_texts)  # 새로운 이메일마다 tokenizer 초기화 필요 여부 확인
+    email_text_encoded = tokenizer.texts_to_sequences(email_texts)
+    email_text_padded = pad_sequences(email_text_encoded, maxlen=189)
+
+    predictions = loaded_model.predict(email_text_padded)
+    for idx, prediction in enumerate(predictions):
+        if prediction[0] < 0.2:
+            filtered_emails.append(mails[idx])
+        else:
+            print(f"Removed spam email: {mails[idx]}")
+"""
     for email in mails:
         email_texts = [
             email.get('body', '') for email in mails
@@ -100,10 +160,6 @@ def filter(mails):
     print(f'filtered_emails len = {len(filtered_emails)}')
     return filtered_emails
 
-@app.route("/mail/<int:mail_id>")
-def mail(mail_id):
-    # db 에서 메일 가져오기
-    return render_template("mail_content.html")
 
 """클라이언트에게 공개키 전달"""
 @app.route('/get_public_key', methods=['GET'])
@@ -160,6 +216,13 @@ def login(): #
     else: # GET 요청 처리: 로그인 페이지 표시
         return render_template("login.html")
 
+@app.route("/api/logout", methods=["POST"])
+def logout():
+    global imap_connection
+    imap_email_reader.logout_imap(imap_connection)
+    imap_connection = None
+    return '', 200
 
 if __name__ == '__main__':
+    create_table()
     app.run(debug=True)
