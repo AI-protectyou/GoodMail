@@ -44,16 +44,29 @@ def show_mail():
     emails = conn.execute('SELECT * FROM emails ORDER BY id DESC LIMIT 100').fetchall()
     conn.close()
 
-    return jsonify([dict(email) for email in emails])
+    if not emails:
+        return jsonify({"status": "success", "emails": [], "message": "No emails found."})
+
+    return jsonify({"status": "success", "emails": [dict(email) for email in emails]})
 
 @app.route("/api/get_mail")
 def get_mail():
     global imap_connection
+    # imap error
+    if not imap_connection:
+        return jsonify({"error": "IMAP connection is not established"}), 500
+
     mails = imap_email_reader.read_email(imap_connection)
-    #print(mails)
+
+    # mail error
+    if mails is None:
+        return jsonify({"error": "Failed to read emails from IMAP"}), 500
 
     # DB에 저장 (중복되는 메일은 저장하지 않음)
     conn = get_db_connection()
+    # db error
+    if not conn:
+        return jsonify({"error": "Database connection failed"}), 500
 
     for mail in reversed(mails):
         uid = mail.get('uid')
