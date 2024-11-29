@@ -67,89 +67,73 @@
     </section>
 
     <script>
-        function Show_mail () {   //db에서 메일 목록 가져오기
-            fetch('/api/mail', {
-                method: 'GET'
-              })
-                .then(response => {
-                  if (!response.ok) {
-                    throw new Error('메일 목록 출력 실패!')
-                  }
-                  return response.json()
-                })
-                .then(emails => {
-                  console.log(emails);
-                  const mailsDiv = document.getElementById('mails');
-                  if (emails.length > 0) {
-                    emails.forEach((email) => {
-                      const mailItem = document.createElement('div');
-                      mailItem.textContent = email.subject; // 이메일 제목만 예시로 표시
-                      mailsDiv.appendChild(mailItem);
-                    })
-                  } else {
-                    const noEmailMessage = document.createElement('div');
-                    noEmailMessage.textContent = '이메일이 없습니다.';
-                    mailsDiv.appendChild(noEmailMessage);
-                  }
-                })
-        }
+  async function fetchEmails() {
+    try {
+      const response = await fetch('/api/mail', {
+        method: 'GET'
+      });
 
-        function Get_all_mail () {    //db 갱신하고 db 모든 메일 목록 가져오기
-            fetch('/api/get_mail', {
-                method: 'GET'
-             })
-            .then (response => {
-                if (!response.ok) {
-                    throw new Error('메일 가져오기 실패!');
-                }
-                return response.json();
-            })
-            .then (emails => {
-                console.log(emails);
-                const mailsDiv = document.getElementById('mails');
-                emails.forEach((email) => {
-                  const mailItem = document.createElement('div');
-                  mailItem.textContent = email.subject;
-                  mailsDiv.appendChild(mailItem);
-                })
-            })
-        }
+      if (!response.ok) {
+        throw new Error('메일 목록 출력 실패!');
+      }
 
-        document.addEventListener('DOMContentLoaded', async () => {
-          document.querySelector('#get_mail').click();
-        });
+      const data = await response.json();
 
-        document.getElementById('get_mail').addEventListener('click', async () => {
-            console.log('button click');
-            Get_all_mail();
-        });
+      if (data.status === 'updating') {
+        // 업데이트 중인 경우, 5초 후 다시 시도
+        console.log('업데이트 중, 잠시 후 다시 시도합니다...');
+        setTimeout(fetchEmails, 5000);
+        return;
+      }
 
+      const mailsDiv = document.getElementById('mails');
+      mailsDiv.innerHTML = ''; // 기존 내용을 비움
 
-      //메일 검색
-        document.querySelector('input[type="search"]').addEventListener('keydown', (evt) => {
-        if (evt.key === 'Enter') {
-          let query = evt.target.value
-          console.log(evt)
-          if (query.length > 1) {
-            //백엔드에서 받기
-          } else {
-            alert('검색 실패! 두 글자 이상 입력해주세요.')
-          }
-        }
-      })
+      // data.emails가 올바르게 가져오도록 수정
+      data.emails.forEach((email) => {
+        const mailItem = document.createElement('div');
+        mailItem.textContent = email.subject;
+        mailsDiv.appendChild(mailItem);
+      });
 
-      document.getElementById('logoutButton').addEventListener('click', function () {
-        console.log('로그아웃 눌림')
-        fetch('/api/logout', {
-          method: 'POST'
-        }).then(function (response) {
-          if (response.ok) {
-            window.location.href = '/login' // 로그인 페이지로 강제 이동
-          }
-        })
-      })
-      //메일 불러오기(새로고침, 페이지 로딩) Default:전체 메일 보기
-      const mails = document.querySelector('#mails')
-    </script>
+    } catch (error) {
+      console.error('데이터 가져오기 실패:', error);
+      setTimeout(fetchEmails, 5000); // 실패 시 5초 후 재시도
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    fetchEmails();
+  });
+
+  document.getElementById('get_mail').addEventListener('click', () => {
+    console.log('전체 메일 보기 클릭');
+    fetchEmails();
+  });
+
+  document.querySelector('input[type="search"]').addEventListener('keydown', (evt) => {
+    if (evt.key === 'Enter') {
+      let query = evt.target.value;
+      console.log(evt);
+      if (query.length > 1) {
+        // 백엔드에서 검색 요청 추가
+      } else {
+        alert('검색 실패! 두 글자 이상 입력해주세요.');
+      }
+    }
+  });
+
+  document.getElementById('logoutButton').addEventListener('click', function () {
+    console.log('로그아웃 눌림');
+    fetch('/api/logout', {
+      method: 'POST'
+    }).then(function (response) {
+      if (response.ok) {
+        window.location.href = '/login'; // 로그인 페이지로 이동
+      }
+    });
+  });
+</script>
+
   </body>
 </html>
