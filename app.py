@@ -1,20 +1,18 @@
 import os
 import time
+from threading import Lock
 import tensorflow
 from flask import Flask,jsonify, render_template, url_for, request, redirect, session, flash
 from dotenv import load_dotenv
-from datetime import timedelta
 import imap_email_reader
 import key_loader
 import rsa_cipher
 from db_utils import get_db_connection, insert_email, create_table
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
 import tensorflow.keras.models
 from sklearn.feature_extraction.text import TfidfVectorizer
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-
+import threading
 loaded_model = tensorflow.keras.models.load_model('spam_model.h5')
 app = Flask(__name__)
 
@@ -23,9 +21,62 @@ app.secret_key = os.getenv('SECRET_KEY', 'your_default_secret_key')  # .env 파�
 
 imap_connection = None
 user_email = None
-is_db_updating = False
-scheduler = BackgroundScheduler()
+update_lock = Lock()
 vectorizer = TfidfVectorizer()
+
+
+# 이메일을 DB에 갱신하는 함수
+def fetch_emails():
+    print("Fetching emails...")
+    global imap_connection, update_lock
+
+    # 락을 사용하여 동시 작업 방지
+    if not update_lock.acquire(blocking=False):
+        print("Database is currently being updated by another process.")
+        return
+
+    try:
+        # IMAP 연결 확인
+        if not imap_connection:
+            print("IMAP connection is not established.")
+            return
+
+        # 이메일 가져오기
+        mails = imap_email_reader.read_email(imap_connection)
+        if mails is None:
+            print("Failed to read emails from IMAP.")
+            return
+
+        # DB 연결
+        conn = get_db_connection()
+        if not conn:
+            print("Database connection failed.")
+            return
+
+        # 이메일 저장 (중복 방지)
+        for mail in reversed(mails):
+            uid = mail.get('uid')
+            existing_mail = conn.execute('SELECT id FROM emails WHERE uid = ?', (uid,)).fetchone()
+            if not existing_mail:
+                insert_email(
+                    uid=uid,
+                    subject=mail.get('subject', 'No Subject'),
+                    sender=mail.get('sender', 'Unknown Sender'),
+                    sender_email=mail.get('sender_email', 'Unknown Email'),
+                    date=mail.get('date', 'Unknown Date'),
+                    body=mail.get('body', '')
+                )
+        conn.commit()
+        conn.close()
+        print("Emails successfully fetched and stored.")
+
+    except Exception as e:
+        print(f"Error during email fetching: {e}")
+
+    finally:
+        # 락 해제
+        update_lock.release()
+    print("Fetching 끝남...")
 
 @app.route("/")
 def home():
@@ -34,7 +85,6 @@ def home():
 """메일 리스트"""
 @app.route("/mailbox")
 def mailbox():
-    start_email_fetching()
     return render_template("mail_list.html", user_email=user_email)
 
 @app.route("/mail/<int:mail_id>")
@@ -43,8 +93,7 @@ def mail(mail_id):
 
 @app.route("/api/mail", methods=["GET"])
 def show_mail():
-    global is_db_updating
-    if is_db_updating:
+    if update_lock.locked():
         return jsonify({"status": "updating"})
 
     # db에 있는 내용 다 가져오기
@@ -57,104 +106,6 @@ def show_mail():
 
     return jsonify({"status": "success", "emails": [dict(email) for email in emails]})
 
-# 이메일을 DB에 갱신하는 함수
-def fetch_emails():
-    global is_db_updating, imap_connection
-
-    # 갱신중
-    if is_db_updating:
-        return
-    is_db_updating = True
-
-    # imap error
-    if not imap_connection:
-        return jsonify({"error": "IMAP connection is not established"})
-
-    mails = imap_email_reader.read_email(imap_connection)
-    # mail error
-    if mails is None:
-        return jsonify({"error": "Failed to read emails from IMAP"})
-
-    # DB에 저장 (중복되는 메일은 저장하지 않음)
-    conn = get_db_connection()
-    # db error
-    if not conn:
-        return jsonify({"error": "Database connection failed"})
-
-    for mail in reversed(mails):
-        uid = mail.get('uid')
-        # 중복 메일 확인
-        existing_mail = conn.execute('SELECT id FROM emails WHERE uid = ?', (uid,)).fetchone()
-        if not existing_mail:
-            # 새로운 메일을 DB에 저장
-            insert_email(
-                uid=uid,
-                subject=mail.get('subject', 'No Subject'),
-                sender=mail.get('sender', 'Unknown Sender'),
-                sender_email=mail.get('sender_email', 'Unknown Email'),
-                date=mail.get('date', 'Unknown Date'),
-                body=mail.get('body', '')
-            )
-
-    # DB에서 모든 이메일을 조회하여 반환
-    all_emails = conn.execute('SELECT * FROM emails ORDER BY id DESC').fetchall()
-    conn.close()
-    is_db_updating = False
-
-
-@app.route("/api/get_mail")
-def get_mail():
-    global imap_connection
-    # imap error
-    if not imap_connection:
-        return jsonify({"error": "IMAP connection is not established"}), 500
-
-    mails = imap_email_reader.read_email(imap_connection)
-
-    # mail error
-    if mails is None:
-        return jsonify({"error": "Failed to read emails from IMAP"}), 500
-
-    # DB에 저장 (중복되는 메일은 저장하지 않음)
-    conn = get_db_connection()
-    # db error
-    if not conn:
-        return jsonify({"error": "Database connection failed"}), 500
-
-    for mail in reversed(mails):
-        uid = mail.get('uid')
-        # 중복 메일 확인
-        existing_mail = conn.execute('SELECT id FROM emails WHERE uid = ?', (uid,)).fetchone()
-        if not existing_mail:
-            # 새로운 메일을 DB에 저장
-            insert_email(
-                uid=uid,
-                subject=mail.get('subject', 'No Subject'),
-                sender=mail.get('sender', 'Unknown Sender'),
-                sender_email=mail.get('sender_email', 'Unknown Email'),
-                date=mail.get('date', 'Unknown Date'),
-                body=mail.get('body', '')
-            )
-
-    # DB에서 모든 이메일을 조회하여 반환
-    all_emails = conn.execute('SELECT * FROM emails ORDER BY id DESC').fetchall()
-    conn.close()
-
-    # 모든 이메일 데이터를 JSON 형태로 변환
-    email_list = []
-    for email in all_emails:
-        email_data = {
-            'id': email['id'],
-            'uid': email['uid'],
-            'subject': email['subject'],
-            'sender': email['sender'],
-            'sender_email': email['sender_email'],
-            'date': email['date'],
-            'body': email['body']
-        }
-        email_list.append(email_data)
-
-    return jsonify(email_list)
 
 # ai 코드 예시
 def filter_emails(mails):
@@ -265,12 +216,13 @@ def login(): #
         if decrypted_email and decrypted_password:
             global imap_connection
             imap_connection = imap_email_reader.login_to_imap(server_name, decrypted_email, decrypted_password)
-            if imap_connection:  # 로그인 성공
+            if imap_connection:
                 print("imap 로그인 성공!!")
-                global user_email # 추가
-                user_email = decrypted_email # 추가
-                #imap_connection.logout() # 일단 test 하려고 로그인만 확인하고 연결 끊기
-                # 이메일 목록 페이지로 리디렉션
+                global user_email
+                user_email = decrypted_email
+
+                fetch_emails()
+
                 return redirect(url_for('mailbox'))
 
             else:
@@ -287,16 +239,7 @@ def logout():
     imap_email_reader.logout_imap(imap_connection)
     imap_connection = None
     user_email = None
-    stop_email_fetching()
     return '', 200
-
-def start_email_fetching():
-    # 5분마다 fetch_and_store_emails 실행
-    scheduler.add_job(fetch_emails, IntervalTrigger(minutes=3), id='fetch_emails_job', replace_existing=True)
-    scheduler.start()
-
-def stop_email_fetching():
-    scheduler.remove_job('fetch_emails_job')
 
 
 if __name__ == '__main__':

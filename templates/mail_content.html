@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Good Mail 목록</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/mail_list_pages.css">
+    <link rel="stylesheet" href="../static/css/pretendard.css">
+</head>
+
+<body>
+    <header id="logo_header">
+        <div class="userEmail">
+            <div id="userEmail">{{ user_email }}</div>
+            <button id="logoutButton" title="로그아웃"></button>
+        </div>
+        <div class="logo_search">
+            <img id="medium_logo" src="../static/images/logo.png">
+            <div id="search_field">
+                <img src="../static/images/search.png">
+                <input type="search" placeholder="메일 검색" name="query">
+            </div>
+        </div>
+    </header>
+    <section class="page_body" id="mail_content">
+        <header>
+            <h4>
+                <input type="button" title="목록으로 돌아가기" id="back">
+                메일 제목<br>두 줄
+            </h4>
+            <div id="mail_detail">
+                <div id="sender">
+                    <span class="mail_detail_elements">
+                        보낸사람
+                    </span>
+                    <span class="mail_detail_values">
+                        예시 : example@example.com
+                    </span>
+                </div>
+                <div>
+                    <span class="mail_detail_elements">
+                        수신일자
+                    </span>
+                    <span id="date" class="mail_detail_values">
+                        0000년 00월 00일 (일) 오전 00:00
+                    </span>
+                </div>
+                <div id="receiver">
+                    <span class="mail_detail_elements">
+                        받은사람
+                    </span>
+                    <span class="mail_detail_values">
+                        나 : example@example.com
+                    </span>
+                </div>
+            </div>
+        </header>
+        <div id="mail_text">
+            메일 본문
+        </div>
+    </section>
+</body>
+
+</html>
