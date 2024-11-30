@@ -84,8 +84,6 @@ def fetch_emails():
         print("Emails successfully fetched and stored.")
     except Exception as e:
         print(f"Error during email fetching: {e}")
-    finally:
-        update_lock.release() # 락 해제
     print("Fetching 끝남...")
     return jsonify({"status": "success", "message": "Emails fetched and stored successfully."})
 
