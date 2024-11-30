@@ -85,10 +85,11 @@ def fetch_emails():
     except Exception as e:
         print(f"Error during email fetching: {e}")
     print("Fetching 끝남...")
+    imap_email_reader.keep_connection_alive(imap_connection)
     return jsonify({"status": "success", "message": "Emails fetched and stored successfully."})
 
 @app.route("/api/filter", methods=["GET"])
-def filter_emails(mails):
+def filter_emails():
     filtered_emails = []
     conn = get_db_connection()
     emails = conn.execute('SELECT * FROM emails ORDER BY id DESC').fetchall()
