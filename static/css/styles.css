@@ -44,15 +44,18 @@ body {
     padding-top: 1vh;
 }
 
-@media (min-width: 701px) {
+@media (min-width: 901px) {
     #header_big img {
         height: 6vh;
     }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 900px) {
     #header_big img {
-        height: 4vh;
+        height: 3vh;
+    }
+    #header_big div {
+        font-size: 40%;
     }
 }
 

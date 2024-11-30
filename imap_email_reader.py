@@ -79,15 +79,8 @@ def login_to_imap(imap_server, username, password):
 """로그아웃"""
 def logout_imap(imap):
     try:
-        if imap.state == imaplib.Commands.LOGIN:
-            # 인증 상태에서 로그아웃 시도 시, 오류를 피하기 위해 `logout` 호출
-            imap.logout()
-        elif imap.state == imaplib.Commands.SELECTED:
-            # 선택된 상태에서 `CLOSE` 명령어가 허용됨
-            imap.close()
-            imap.logout()
-        else:
-            print("Invalid IMAP state for logout.")
+        imap.logout()
+        print("로그아웃 성공")
     except Exception as e:
         print(f"로그아웃 오류: {str(e)}")
 
@@ -163,12 +156,22 @@ def read_email(imap):
                     "date": date,
                     "body": body_content
                 })
-
-
+        imap.close()
     except (imaplib.IMAP4.error, Exception) as e:
         print(f"이메일 읽기 오류: {e}")
 
     return emails  # 이메일 리스트 정보 반환
+
+def keep_connection_alive(imap):
+    try:
+        if imap:
+            status, response = imap.noop()
+            if status == 'OK':
+                print("연결 유지 중...")
+            else:
+                print("연결 유지 실패")
+    except Exception as e:
+        print(f"연결 유지 오류: {str(e)}")
 
 """
 if __name__ == "__main__":

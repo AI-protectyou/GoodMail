@@ -1,226 +1,255 @@
 <!DOCTYPE html>
 <html dir="ltr" lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Good Mail 목록</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="../static/css/mail_list_pages.css" />
-    <link rel="stylesheet" href="../static/css/pretendard.css" />
-  </head>
 
-  <body>
-    <!-- 로고 서치 영역 -->
-    <header id="logo_header">
-      <div class="userEmail">
-        <div id="userEmail">{{ user_email }}</div>
-        <button id="logoutButton" title="로그아웃"></button>
+<head>
+  <meta charset="UTF-8" />
+  <title>Good Mail 목록</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="../static/css/mail_list_pages.css" />
+  <link rel="stylesheet" href="../static/css/pretendard.css" />
+</head>
+
+<body>
+  <!-- 로고 서치 영역 -->
+  <header id="logo_header">
+    <div class="userEmail">
+      <div id="userEmail">{{ user_email }}</div>
+      <button id="logoutButton" title="로그아웃"></button>
+    </div>
+    <div class="logo_search">
+      <img id="medium_logo" src="../static/images/logo.png" />
+      <div id="search_field">
+        <img src="../static/images/search.png" />
+        <input type="search" placeholder="메일 검색" name="query" />
       </div>
-      <div class="logo_search">
-        <img id="medium_logo" src="../static/images/logo.png" />
-        <div id="search_field">
-          <img src="../static/images/search.png" />
-          <input type="search" placeholder="메일 검색" name="query" />
-        </div>
+    </div>
+  </header>
+  <section class="page_body" id="mail_list">
+    <!-- 메뉴바 -->
+    <nav>
+      <div class="left_group">
+        <ul>정렬:</ul>
+        <ul>
+          <select id="sort_key">
+            <option value="chronological" selected>시간순</option>
+            <option value="alphabetical">이름순</option>
+          </select>
+        </ul>
+        <ul>
+          <select id="sort_order">
+            <option value="descending" selected>내림차순</option>
+            <option value="ascending">오름차순</option>
+          </select>
+        </ul>
+        <ul>
+          <input type="button" id="refresh" value="새로고침 (F5)" />
+        </ul>
       </div>
-    </header>
-    <section class="page_body" id="mail_list">
-      <!-- 메뉴바 -->
-      <nav> 
-        <div class="left_group">
-          <ul>정렬:</ul>
-          <ul>
-            <select>
-              <option value="chronological" selected>시간순</option>
-              <option value="sender">이름순</option>
-            </select>
-          </ul>
-          <ul>
-            <select>
-              <option value="descending" selected>내림차순</option>
-              <option value="ascending">오름차순</option>
-            </select>
-          </ul>
-          <ul>
-            <input class="button" type="button" value="새로고침 (F5)" />
-          </ul>
-        </div>
-        <div class="right_group">
-          <ul>
-            <input type="button" id="get_mail" value="전체 메일 보기" />
-          </ul>
-          <ul>
-            <input type="button" value="AI 필터링 실행" />
-          </ul>
-        </div>
-      </nav>
-      <!-- 메일 목록 -->
-      <main>
-        <div id="mails">
-          <div> <span>송신자</span><span class="mail_title">제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-          <div> <span>마지막 송신자</span><span class="mail_title">제목</span><span>수신 시간</span> </div>
-        </div>
-
-      </main>
-      <!-- 페이지 버튼 -->
-      <div id="mail_list_paging">
-        <div class="buttons">
-          <input type="button" title="맨 앞 페이지로" id="leftmost" />
-          <input type="button" title="이전 페이지로" id="left" />
-          <input type="button" id="line" disabled />
-          <input type="button" title="다음 페이지로" id="right" />
-          <input type="button" title="맨 끝 페이지로" id="rightmost" />
-        </div>
-        <div class="text">1 / N 페이지</div>
+      <div class="right_group">
+        <ul>
+          <input type="button" id="get_mail" value="전체 메일 보기" />
+        </ul>
+        <ul>
+          <input type="button" id="filtering" value="AI 필터링 실행" />
+        </ul>
       </div>
-    </section>
-  </body>
+    </nav>
+    <!-- 메일 목록 -->
+    <main>
+      <div id="mails">
+      </div>
+    </main>
+    <!-- 페이지 버튼 -->
+    <div id="mail_list_paging">
+      <div class="buttons">
+        <input type="button" title="맨 앞 페이지로" id="leftmost" />
+        <input type="button" title="이전 페이지로" id="left" />
+        <input type="button" id="line" disabled />
+        <input type="button" title="다음 페이지로" id="right" />
+        <input type="button" title="맨 끝 페이지로" id="rightmost" />
+      </div>
+      <div class="text">1 / N 페이지</div>
+    </div>
+  </section>
+</body>
 
-
-  <script>
-    var page_num = 0;
-    var mail_count = 0;
-    //db에서 메일 목록 가져오기
-    function Show_mail () {   
-      fetch('/api/mail', {
-          method: 'GET'
-        })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('메일 목록 출력 실패!')
-            }
-            return response.json()
-          })
-          .then(status => { //JSON_status로 업데이트 진행여부 확인
-            if(status == 'updating') {
-              alert('메일목록 업데이트 중입니다. 잠시 후 시도해주세요.');
-              return status.json()
-            }
-          })
-          .then(emails => {
-            if (emails)
-            console.log(emails);
-            const mailsDiv = document.getElementById('mails');
-            if (emails.length > 0) {
-              emails.forEach((email) => {
-                const mailItem = document.createElement('div');
-                mailItem.textContent = email.subject; // 이메일 제목만 예시로 표시
-                mailsDiv.appendChild(mailItem);
-              })
-            } else {
-              const noEmailMessage = document.createElement('div');
-              noEmailMessage.textContent = '이메일이 없습니다.';
-              mailsDiv.appendChild(noEmailMessage);
-            }
-          })
-          .catch(error => {
-            console.error('에러 발생:', error);
-            alert('메일 불러오기 실패!');
-          });
-    }
-
-    //db 갱신하고 db 모든 메일 목록 가져오기
-    function Get_all_mail () {    
-      fetch('/api/get_mail', {
-        method: 'GET'
-      })
-        .then (response => {
-            if (!response.ok) {
-                throw new Error('메일 가져오기 실패!');
-            }
-            return response.json();
-        })
-        .then (emails => {
-            console.log(emails);
-            const mailsDiv = document.getElementById('mails');
-            emails.forEach((email) => {
-              const mailItem = document.createElement('div');
-              mailItem.textContent = email.subject;
-              mailsDiv.appendChild(mailItem);
-            })
-        })
-        .catch(error => {
-          console.error('에러 발생:', error);
-          alert('메일 갱신 실패!');
-      });
-    }
-
-    //페이징
-    function Paging (list) {
-
-    }
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      Show_mail();
-    });
-
-    document.getElementById('get_mail').addEventListener('click', async () => {
-        console.log('button click');
-        Get_all_mail();
-    });
-
-
-    //메일 검색
-    document.querySelector('input[type="search"]').addEventListener('keydown', evt => {
-      if (evt.key === 'Enter') {
-        let query = evt.target.value
-        console.log(evt)
-        if (query.length > 1) {
-          //백엔드에서 받기
-        } else {
-          alert('검색 실패! 두 글자 이상 입력해주세요.')
+<script>
+  //메일 정렬 후 페이지에 출력하기
+  function Print_emails(emails, sort_key, sort_order) {
+    if(emails.length !== 0) {
+      if(sort_key === 'chronological') {
+        if(sort_order === 'descending') {
+          //default
+        } else if(sort_order === 'ascending') {
+          emails.reverse(); //default 리스트 순서 뒤집기
+        } 
+      } else if(sort_key === 'alphabetical') {
+        if(sort_order === 'ascending') {
+          emails.sort((a, b) => a.sender.localeCompare(b.sender));
+        } else if(sort_order === 'descending') {
+          emails.sort((a, b) => b.sender.localeCompare(a.sender));
         }
       }
-    })
+      document.querySelector('#mails').innerHTML = '';
+      emails.forEach(email => {
+        const div = document.createElement('div');
+        const lineBreak = document.createElement('br');
+        const subject = document.createElement('span');
+        const sender = document.createElement('span');
+        const date = document.createElement('span');
+        
+        subject.textContent = email.subject;
+        subject.setAttribute('class', 'subject');
+        sender.textContent = `${email.sender}:`;
+        sender.appendChild(lineBreak);
+        sender.append(`${email.sender_email}`);
+        sender.setAttribute('class', 'sender');
+        date.textContent = email.date;
+        date.setAttribute('class', 'date');
 
-    //로그아웃
-    document.getElementById('logoutButton').addEventListener('click', function () {
-      console.log('로그아웃 눌림')
-      fetch('/api/logout', {
-        method: 'POST'
+        div.append(sender, subject, date);
+
+        console.log(subject);
+        console.log(div);
+
+        document.querySelector('#mails').appendChild(div);          
       })
+    } else {
+      console.log(`${data.message}`);
+    }
+  }
+
+  //db에서 메일 목록 가져오기
+  function Fetch_emails(sort_key, sort_order) {
+    fetch('/api/mail', {
+      method: 'GET'
+    })
       .then(response => {
-          if (!response.ok) {
-            thorw new Error('로그아웃 실패!');
-            return response.json;
-          } else {
-            window.location.href = '/login' // 로그인 페이지로 강제 이동
-          }
+        if (!response.ok) {
+          throw new Error('메일 목록 출력 실패!')
+        }
+        return response.json()
+      })
+      .then(data => {
+        Print_emails(data.emails, sort_key, sort_order);
+      })
+      .catch(error => {
+        console.error('에러 발생:', error);
+        alert('메일 불러오기 실패!');
+      });
+  }
+  
+  //db 갱신하고 db 모든 메일 목록 가져오기
+  function Fetch_updated_emails(sort_key, sort_order) {
+    fetch('/api/get_mail', {
+      method: 'GET'
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('메일 갱신 실패!')
+      }
+      return response.json()
+    })
+    .then(data => {
+      console.log('응답 데이터:', data);
+      if(data.status === "success") {
+        Fetch_emails(sort_key, sort_order);
+      } else {
+        alert('IMAP 커넥션 오류 발생!');
       }
     })
-  </script>
+    .catch(error => {
+      console.error('에러 발생:', error);
+      alert('메일 갱신 실패!');
+    });
+  }
+
+  //db에서 AI 필터링된 메일 목록 가져오기
+  function Fetch_filtered_emails(sort_key, sort_order) {
+    fetch('/api/filter', {
+      method: 'GET'
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('필터링된 메일 불러오기 실패!')
+        }
+        return response.json()
+      })
+      .then(data => {
+        Print_emails(data.emails, sort_key, sort_order);
+      })
+      .catch(error => {
+        console.error('에러 발생:', error);
+        alert('필터링된 메일 불러오기 실패!');
+      });
+  }
+
+  //페이징
+  function Paging(list) {
+
+  }
+
+  //db에서 정렬된 메일 목록 가져오는 객체
+  const show_mail = async () => {
+    Fetch_emails(document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
+  };
+  
+  //새로고침
+  document.addEventListener('DOMContentLoaded', show_mail);
+
+  //새로고침 버튼 클릭
+  document.querySelector('#refresh').addEventListener('click', () => {
+    location.reload();
+  });
+
+  //정렬기준 객체 조작
+  document.querySelector('#sort_key').addEventListener('change', show_mail);
+  
+  //정렬순서 객체 조작
+  document.querySelector('#sort_order').addEventListener('change', show_mail);
+
+  //전체 메일 보기 버튼 클릭
+  document.getElementById('get_mail').addEventListener('click', () => {
+    console.log('전체 메일 보기 button click');
+    Fetch_updated_emails(document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
+  });
+
+  //AI 필터링 실행 버튼 클릭
+  document.querySelector('#filtering').addEventListener('click', () => {
+    console.log('AI 필터링 실행 button click');
+    Fetch_filtered_emails(document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
+  });
+
+  //메일 검색
+  document.querySelector('input[type="search"]').addEventListener('keydown', evt => {
+    if (evt.key === 'Enter') {
+      let query = evt.target.value
+      console.log(evt)
+      if (query.length > 1) {
+        //백엔드에서 받기
+      } else {
+        alert('검색 실패! 두 글자 이상 입력해주세요.')
+      }
+    }
+  })
+
+  //로그아웃
+  document.querySelector("#logoutButton").addEventListener('click', function () {
+    console.log('로그아웃 눌림')
+    fetch('/api/logout', {
+      method: 'POST'
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('로그아웃 실패!');
+        }
+        window.location.href = '/login';
+      })
+      .catch(error => {
+        console.error('에러 발생:', error);
+        alert('로그아웃 실패!');
+      })
+    })
+</script>
+
 </html>

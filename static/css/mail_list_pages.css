@@ -204,7 +204,8 @@ nav * ul input[type="button"]:hover {
 #mails div {
     display: flex;
     align-items: center;
-    padding: 6px 20px;
+    padding: 5px 20px;
+    width: calc(100% - 40px);
     height: 10%;
     
     background: #FCFCFC;
@@ -218,29 +219,39 @@ nav * ul input[type="button"]:hover {
     cursor: pointer;
 }
 
-#mails span {
-    display: inline-block;
-    padding: 0 15px;
+#mails div > span {
+    display: flex;
     width: 15%;
+    height: 2.5em;
+    padding: 0 15px;
 
     color: #616168;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 12px;
     line-height: 21px;
     align-items: center;
     text-align: left;
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+    white-space: normal;     
+    line-height: 1.2;
 }
 
-#mails .mail_title {
+#mail .sender {
+    width: 35%;
+}
+
+#mails .subject {
     width: 54%;
-
-    white-space: nowrap;      
-    overflow: hidden;         
-    text-overflow: ellipsis;
-
+    
     border-width: 0 0.1px;
     border-style: solid;
     border-color: #A0A1AD;
+}
+
+#mail .date {
+    width: 10%;
 }
 
 #mail_list_paging {
@@ -297,7 +308,7 @@ nav * ul input[type="button"]:hover {
 
 #mail_list_paging .text {
     position: absolute;
-    left: calc(400px + 40vw);
+    left: calc(300px + 40vw);
     top: 50%;
     transform: translateY(-50%);
     font-weight: 400;
