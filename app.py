@@ -87,18 +87,19 @@ def fetch_emails():
     print("Fetching 끝남...")
     return jsonify({"status": "success", "message": "Emails fetched and stored successfully."})
 
-# ai 코드 예시
+@app.route("/api/filter", methods=["GET"])
 def filter_emails(mails):
     filtered_emails = []
-    for email in mails:
-        if 'Steam' not in email.get('subject', ''):
-            filtered_emails.append(email)
-        else:
-            print(f"Removed email: {email}")
-    return filtered_emails
+    conn = get_db_connection()
+    emails = conn.execute('SELECT * FROM emails ORDER BY id DESC').fetchall()
+    conn.close()
+    emails_dict = [dict(email) for email in emails]
+    filtered_emails = filter(emails_dict)
+    print(filtered_emails)
+    return jsonify({"status": "success", "emails": filtered_emails})
 
 # ai 코드
-def filter(mails):
+def filter(emails):
     filtered_emails = []
     tokenizer = Tokenizer()
 
@@ -120,9 +121,9 @@ def filter(mails):
         else:
             print(f"Removed spam email: {mails[idx]}")
 """
-    for email in mails:
+    for email in emails:
         email_texts = [
-            email.get('body', '') for email in mails
+            email.get('body', '') for email in emails
         ]
 
         email_text_encoded = tokenizer.texts_to_sequences([email_texts])
