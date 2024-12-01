@@ -74,24 +74,36 @@
 </body>
 
 <script>
-  let emails = [];
+  let splitedEmails = [];
+  let pnum = 1;
+  let mnum = 20;
+  let pmax;
+
+  
 
   //메일 정렬 후 페이지에 출력하기
-  function Print_emails(emails, sort_key, sort_order) {
-    let emailsC = emails.slice();
-    if (emailsC.length !== 0) {
+  function Print_emails(sort_key, sort_order) {
+    let emailsC;
+    let splitedEmailsC = splitedEmails.slice();
+    if (splitedEmailsC.length !== 0) {
       if (sort_key === 'chronological') {
         if (sort_order === 'descending') {
           //default
+          emailsC = splitedEmails[pnum-1];
         } else if (sort_order === 'ascending') {
-          emailsC.reverse(); //default 리스트 순서 뒤집기
+          //default 리스트 순서 뒤집기
+          splitedEmailsC.reverse();
+          emailsC = splitedEmailsC[pnum-1];
         }
       } else if (sort_key === 'alphabetical') {
+        emailsC = splitedEmailsC.flat();
         if (sort_order === 'ascending') {
           emailsC.sort((a, b) => a.sender.localeCompare(b.sender));
         } else if (sort_order === 'descending') {
           emailsC.sort((a, b) => b.sender.localeCompare(a.sender));
         }
+        splitedEmailsC = Split_list(emailsC);
+        emailsC = splitedEmailsC[pnum-1];
       }
       document.querySelector('#mails').innerHTML = '';
       emailsC.forEach(email => {
@@ -117,6 +129,7 @@
 
         document.querySelector('#mails').appendChild(div);
       })
+      document.querySelector('.text').textContent = `${pnum} / ${pmax} 페이지`;
     } else {
       console.log(`${data.message}`);
     }
@@ -134,8 +147,8 @@
         return response.json()
       })
       .then(data => {
-        emails = data.emails;
-        Print_emails(emails, sort_key, sort_order);
+        splitedEmails = Split_list(data.emails);
+        Print_emails(sort_key, sort_order);
       })
       .catch(error => {
         console.error('에러 발생:', error);
@@ -180,8 +193,8 @@
         return response.json()
       })
       .then(data => {
-        emails = data.emails;
-        Print_emails(emails, sort_key, sort_order);
+        splitedEmails = split_list(data.emails);
+        Print_emails(sort_key, sort_order);
       })
       .catch(error => {
         console.error('에러 발생:', error);
@@ -189,14 +202,51 @@
       });
   }
 
-  //페이징
-  function Paging(list) {
+  //페이지 용량에 맞게 리스트 나누기
+  function Split_list(emails) {
+    let slicedEmails = [];
+    pmax = 0;
+    for(let i=0; i < emails.length; i += mnum) {
+      pmax++;
+      if(i + mnum >= emails.length) {
+        slicedEmails.push(emails.slice(i));
+        break;
+      }
+      slicedEmails.push(emails.slice(i, i + mnum));
+    }
+    //console.log(slicedEmails);
+    return slicedEmails;
+  }
 
+  //페이징
+  function Paging(num) {
+    switch(num) {
+      case -2:
+        pnum = 1;
+        show_mail();
+        break;
+      case -1:
+        if(pnum > 1) {
+          pnum -= 1;
+          show_mail();
+        }
+        break;
+      case 1:
+        if(pnum < pmax) {
+          pnum += 1;
+          show_mail();
+        }
+        break;
+      case 2:
+        pnum = pmax;
+        show_mail();
+        break;
+    }
   }
 
   //페이지에 저장된 메일 목록 출력하는 객체
   const show_mail = async () => {
-    Print_emails(emails, document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
+    Print_emails(document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
   };
 
   //db 갱신하고 정렬된 메일 목록 받아서 출력하는 객체
@@ -206,7 +256,7 @@
 
   //새로고침
   document.addEventListener('DOMContentLoaded', async () => {
-    Fetch_emails(document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
+    Fetch_updated_emails(document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
   });
 
   //새로고침 버튼 클릭
@@ -237,15 +287,15 @@
     let query = evt.target.value;
     console.log(evt);
     if (query.length > 0) {
-      const emailsC = emails.filter(email => 
+      const splitedEmailsC = splitedEmails.filter(email => 
         email.subject.includes(query) ||
           email.sender_email.includes(query) ||
           email.sender.includes(query)
       );
       console.log(query);
-      if (emailsC.length > 0) {
+      if (splitedEmailsC.length > 0) {
         console.log(emailsC);
-        Print_emails(emailsC, document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
+        Print_emails(document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
       } else {
         document.querySelector('#mails').innerHTML = '';
       }
@@ -253,6 +303,21 @@
       show_mail();
     }
   })
+
+  //페이징 버튼
+  document.querySelector('#leftmost').addEventListener('click', async () => {
+    Paging(-2);
+  });
+  document.querySelector('#left').addEventListener('click', async () => {
+    Paging(-1);
+  });
+  document.querySelector('#right').addEventListener('click', async () => {
+    console.log('버튼 눌림!');
+    Paging(1);
+  });
+  document.querySelector('#rightmost').addEventListener('click', async () => {
+    Paging(2);
+  });
 
   //로그아웃
   document.querySelector("#logoutButton").addEventListener('click', function () {
