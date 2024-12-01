@@ -74,30 +74,33 @@
 </body>
 
 <script>
+  let emails = [];
+
   //메일 정렬 후 페이지에 출력하기
   function Print_emails(emails, sort_key, sort_order) {
-    if(emails.length !== 0) {
-      if(sort_key === 'chronological') {
-        if(sort_order === 'descending') {
+    let emailsC = emails.slice();
+    if (emailsC.length !== 0) {
+      if (sort_key === 'chronological') {
+        if (sort_order === 'descending') {
           //default
-        } else if(sort_order === 'ascending') {
-          emails.reverse(); //default 리스트 순서 뒤집기
-        } 
-      } else if(sort_key === 'alphabetical') {
-        if(sort_order === 'ascending') {
-          emails.sort((a, b) => a.sender.localeCompare(b.sender));
-        } else if(sort_order === 'descending') {
-          emails.sort((a, b) => b.sender.localeCompare(a.sender));
+        } else if (sort_order === 'ascending') {
+          emailsC.reverse(); //default 리스트 순서 뒤집기
+        }
+      } else if (sort_key === 'alphabetical') {
+        if (sort_order === 'ascending') {
+          emailsC.sort((a, b) => a.sender.localeCompare(b.sender));
+        } else if (sort_order === 'descending') {
+          emailsC.sort((a, b) => b.sender.localeCompare(a.sender));
         }
       }
       document.querySelector('#mails').innerHTML = '';
-      emails.forEach(email => {
+      emailsC.forEach(email => {
         const div = document.createElement('div');
         const lineBreak = document.createElement('br');
         const subject = document.createElement('span');
         const sender = document.createElement('span');
         const date = document.createElement('span');
-        
+
         subject.textContent = email.subject;
         subject.setAttribute('class', 'subject');
         sender.textContent = `${email.sender}:`;
@@ -112,7 +115,7 @@
         console.log(subject);
         console.log(div);
 
-        document.querySelector('#mails').appendChild(div);          
+        document.querySelector('#mails').appendChild(div);
       })
     } else {
       console.log(`${data.message}`);
@@ -131,37 +134,38 @@
         return response.json()
       })
       .then(data => {
-        Print_emails(data.emails, sort_key, sort_order);
+        emails = data.emails;
+        Print_emails(emails, sort_key, sort_order);
       })
       .catch(error => {
         console.error('에러 발생:', error);
         alert('메일 불러오기 실패!');
       });
   }
-  
+
   //db 갱신하고 db 모든 메일 목록 가져오기
   function Fetch_updated_emails(sort_key, sort_order) {
     fetch('/api/get_mail', {
       method: 'GET'
     })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('메일 갱신 실패!')
-      }
-      return response.json()
-    })
-    .then(data => {
-      console.log('응답 데이터:', data);
-      if(data.status === "success") {
-        Fetch_emails(sort_key, sort_order);
-      } else {
-        alert('IMAP 커넥션 오류 발생!');
-      }
-    })
-    .catch(error => {
-      console.error('에러 발생:', error);
-      alert('메일 갱신 실패!');
-    });
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('메일 갱신 실패!')
+        }
+        return response.json()
+      })
+      .then(data => {
+        console.log('응답 데이터:', data);
+        if (data.status === "success") {
+          Fetch_emails(sort_key, sort_order);
+        } else {
+          alert('IMAP 커넥션 오류 발생!');
+        }
+      })
+      .catch(error => {
+        console.error('에러 발생:', error);
+        alert('메일 갱신 실패!');
+      });
   }
 
   //db에서 AI 필터링된 메일 목록 가져오기
@@ -176,7 +180,8 @@
         return response.json()
       })
       .then(data => {
-        Print_emails(data.emails, sort_key, sort_order);
+        emails = data.emails;
+        Print_emails(emails, sort_key, sort_order);
       })
       .catch(error => {
         console.error('에러 발생:', error);
@@ -189,13 +194,20 @@
 
   }
 
-  //db에서 정렬된 메일 목록 가져오는 객체
+  //페이지에 저장된 메일 목록 출력하는 객체
   const show_mail = async () => {
-    Fetch_emails(document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
+    Print_emails(emails, document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
   };
-  
+
+  //db 갱신하고 정렬된 메일 목록 받아서 출력하는 객체
+  const show_updated_mail = async () => {
+    Fetch_updated_emails(document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
+  }
+
   //새로고침
-  document.addEventListener('DOMContentLoaded', show_mail);
+  document.addEventListener('DOMContentLoaded', async () => {
+    Fetch_emails(document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
+  });
 
   //새로고침 버튼 클릭
   document.querySelector('#refresh').addEventListener('click', () => {
@@ -204,14 +216,14 @@
 
   //정렬기준 객체 조작
   document.querySelector('#sort_key').addEventListener('change', show_mail);
-  
+
   //정렬순서 객체 조작
   document.querySelector('#sort_order').addEventListener('change', show_mail);
 
   //전체 메일 보기 버튼 클릭
   document.getElementById('get_mail').addEventListener('click', () => {
     console.log('전체 메일 보기 button click');
-    Fetch_updated_emails(document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
+    show_updated_mail();
   });
 
   //AI 필터링 실행 버튼 클릭
@@ -221,15 +233,24 @@
   });
 
   //메일 검색
-  document.querySelector('input[type="search"]').addEventListener('keydown', evt => {
-    if (evt.key === 'Enter') {
-      let query = evt.target.value
-      console.log(evt)
-      if (query.length > 1) {
-        //백엔드에서 받기
+  document.querySelector('input[type="search"]').addEventListener('input', evt => {
+    let query = evt.target.value;
+    console.log(evt);
+    if (query.length > 0) {
+      const emailsC = emails.filter(email => 
+        email.subject.includes(query) ||
+          email.sender_email.includes(query) ||
+          email.sender.includes(query)
+      );
+      console.log(query);
+      if (emailsC.length > 0) {
+        console.log(emailsC);
+        Print_emails(emailsC, document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
       } else {
-        alert('검색 실패! 두 글자 이상 입력해주세요.')
+        document.querySelector('#mails').innerHTML = '';
       }
+    } else {
+      show_mail();
     }
   })
 
@@ -249,7 +270,7 @@
         console.error('에러 발생:', error);
         alert('로그아웃 실패!');
       })
-    })
+  })
 </script>
 
 </html>
