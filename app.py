@@ -211,6 +211,7 @@ def login():
     else: # GET 요청 처리: 로그인 페이지 표시
         return render_template("login.html")
 
+
 @app.route("/api/logout", methods=["POST"])
 def logout():
     global imap_connection, user_email

@@ -47,7 +47,7 @@
             <input type="button" id="get_mail" value="전체 메일 보기" />
           </ul>
           <ul>
-            <input type="button" value="AI 필터링 실행" />
+            <input type="button"id="filtering" value="AI 필터링 실행" />
           </ul>
         </div>
       </nav>
@@ -128,6 +128,39 @@
     });
 });
 
+
+    document.getElementById("filtering").addEventListener("click", async function() {
+    try {
+        const response = await fetch("/api/filter", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.status === "success") {
+            console.log(data); // 받은 데이터 출력
+            const mailsDiv = document.getElementById('mails');
+            mailsDiv.innerHTML = ''; // 기존 내용을 비움
+
+            // 받은 이메일 목록을 출력
+            data.emails.forEach((email) => {
+                const mailItem = document.createElement('div');
+                mailItem.textContent = `${email.subject}`;
+                mailsDiv.appendChild(mailItem);
+            });
+        } else {
+            alert("이메일 가져오기 실패: " + (data.message || "알 수 없는 오류"));
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("서버와의 통신 중 오류가 발생했습니다.");
+    }
+});
+
+
   document.querySelector('input[type="search"]').addEventListener('keydown', (evt) => {
     if (evt.key === 'Enter') {
       let query = evt.target.value;
@@ -150,6 +183,8 @@
       }
     });
   });
+
+
 </script>
 
   </body>
