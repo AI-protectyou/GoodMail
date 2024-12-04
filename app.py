@@ -1,24 +1,23 @@
 import os
 import time
-import tensorflow
 from flask import Flask,jsonify, render_template, url_for, request, redirect, session, flash
 from dotenv import load_dotenv
 import imap_email_reader
 import key_loader
 import rsa_cipher
 from db_utils import get_db_connection, insert_email, create_table
-import tensorflow.keras.models
-from sklearn.feature_extraction.text import TfidfVectorizer
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
+import joblib
+import numpy as np
+from bs4 import BeautifulSoup
 
-loaded_model = tensorflow.keras.models.load_model('spam_model.h5')
+model = joblib.load('spam_classifier_model.pkl')
+tfidf_vectorizer = joblib.load('vectorizer.pkl')
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'your_default_secret_key')  # .env 파일에서 비밀 키를 가져오거나 기본값을 사용
 
 imap_connection = None
+server_name = decrypted_email = decrypted_password = None
 user_email = None
-vectorizer = TfidfVectorizer()
 
 @app.route("/")
 def home():
@@ -46,6 +45,7 @@ def show_mail():
 def fetch_emails():
     print("Fetching emails...")
     global imap_connection
+    imap_connection = imap_email_reader.login_to_imap(server_name, decrypted_email, decrypted_password)
     print(f"IMAP: {imap_connection}")
 
     try:
@@ -64,100 +64,94 @@ def fetch_emails():
         conn = get_db_connection()
         if not conn:
             print("Database connection failed.")
-            return
+            return jsonify({"status": "error", "message": "Database connection failed."}), 500
+
+        new_mails = []
 
         # 이메일 저장 (중복 방지)
         for mail in reversed(mails):
             uid = mail.get('uid')
             existing_mail = conn.execute('SELECT id FROM emails WHERE uid = ?', (uid,)).fetchone()
             if not existing_mail:
-                insert_email(
-                    uid=mail.get('uid', 'No UID'),
-                    subject=mail.get('subject', 'No Subject'),
-                    sender=mail.get('sender', 'Unknown Sender'),
-                    sender_email=mail.get('sender_email', 'Unknown Email'),
-                    date=mail.get('date', 'Unknown Date'),
-                    body=mail.get('body', '')
-                )
+                new_mails.append(mail)
+
+        print(new_mails)
+
+        # filtering
+        filtered_mails = filter(new_mails)
+
+        for mail in filtered_mails:
+            insert_email(
+                uid=mail.get('uid', 'No UID'),
+                subject=mail.get('subject', 'No Subject'),
+                sender=mail.get('sender', 'Unknown Sender'),
+                sender_email=mail.get('sender_email', 'Unknown Email'),
+                date=mail.get('date', 'Unknown Date'),
+                body=mail.get('body', ''),
+                html_body=mail.get('html_body', ''),
+                spam=mail.get('spam')
+            )
         conn.commit()
         conn.close()
+
+
         print("Emails successfully fetched and stored.")
+
     except Exception as e:
         print(f"Error during email fetching: {e}")
+
     print("Fetching 끝남...")
-    imap_email_reader.keep_connection_alive(imap_connection)
-    return jsonify({"status": "success", "message": "Emails fetched and stored successfully."})
+    return jsonify({"status": "success", "message": "Emails fetched and stored successfully."}), 200
 
 @app.route("/api/filter", methods=["GET"])
 def filter_emails():
-    filtered_emails = []
-    conn = get_db_connection()
-    emails = conn.execute('SELECT * FROM emails ORDER BY id DESC').fetchall()
-    conn.close()
-    emails_dict = [dict(email) for email in emails]
-    filtered_emails = filter(emails_dict)
-    print(filtered_emails)
-    return jsonify({"status": "success", "emails": filtered_emails})
+    try:
+        conn = get_db_connection()
+    except Exception as e:
+        print(f"Database connection failed: {e}")
+        return jsonify({"status": "error", "message": "Database connection failed."}), 500
 
-# ai 코드
+    try:
+        # 'body'와 'html_body'를 제외하고 나머지 필드를 선택
+        emails = conn.execute('''
+                SELECT id, uid, subject, sender, sender_email, date, spam 
+                FROM emails 
+                WHERE spam = 0 
+                ORDER BY id DESC
+            ''').fetchall()
+
+        if not emails:
+            return jsonify({"status": "success", "emails": [], "message": "No emails found."}), 200
+
+        # 결과를 딕셔너리로 변환
+        emails_dict = [dict(email) for email in emails]
+        print(emails_dict)
+
+        return jsonify({"status": "success", "emails": emails_dict}), 200
+
+    except Exception as e:
+        print(f"Error fetching emails: {e}")
+        return jsonify({"status": "error", "message": "Error fetching emails."}), 500
+    finally:
+        if conn:
+            conn.close()
+
 def filter(emails):
-    filtered_emails = []
-    tokenizer = Tokenizer()
-
-    """email_texts = [
-        email.get('subject', '') + " " + email.get('sender', '') + " " + email.get('sender_email', '') + " " + email.get('date', '') + " " + email.get('body', '')
-        for email in mails
-    ]"""
-
-    """email_texts = [email.get('body', '') for email in mails]
-
-    tokenizer.fit_on_texts(email_texts)  # 새로운 이메일마다 tokenizer 초기화 필요 여부 확인
-    email_text_encoded = tokenizer.texts_to_sequences(email_texts)
-    email_text_padded = pad_sequences(email_text_encoded, maxlen=189)
-
-    predictions = loaded_model.predict(email_text_padded)
-    for idx, prediction in enumerate(predictions):
-        if prediction[0] < 0.2:
-            filtered_emails.append(mails[idx])
-        else:
-            print(f"Removed spam email: {mails[idx]}")
-"""
     for email in emails:
-        email_texts = [
-            email.get('body', '') for email in emails
-        ]
+        combined_text = email['subject'] + " " + email['body']
+        # combined_text = email['body']
+        spam_prediction = predict_spam_email(combined_text)
 
-        email_text_encoded = tokenizer.texts_to_sequences([email_texts])
+        email['spam'] = int(spam_prediction) # 스팸 예측값을 이메일 정보에 추가
+    return emails
 
-        email_text_padded = pad_sequences(email_text_encoded, maxlen=189)
 
-        prediction = loaded_model.predict(email_text_padded)
-        print(f"Prediction: {prediction}")  # 예측값 확인
+def predict_spam_email(combined_text):
+    email_vector = tfidf_vectorizer.transform([combined_text])
 
-        if prediction[0][0] < 0.2:
-            filtered_emails.append(email)
-        else:
-            print(f"Removed spam email: {email}")
+    prediction = model.predict(email_vector)
 
-    """for email in mails:
-        subject = email.get('subject', '')
-        sender = email.get('sender', '')
-        sender_email = email.get('sender_email', '')
-        date = email.get('date', '')
-        body = email.get('body', '')
-        email_text = subject + " " + sender + " " + sender_email + " " + date + " " + body
-
-        email_text_vector = vectorizer.transform([email_text])
-
-        prediction = loaded_model.predict(email_text_vector)
-        print(f"Prediction: {prediction}")  # 예측값 확인
-
-        if prediction[0][0] < 0.5:  # 0.5 기준으로 분류
-            filtered_emails.append(email)
-        else:
-            print(f"Removed spam email: {email}")"""
-    print(f'filtered_emails len = {len(filtered_emails)}')
-    return filtered_emails
+    return prediction[0]
 
 
 """클라이언트에게 공개키 전달"""
@@ -169,6 +163,8 @@ def get_public_key():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        global server_name, decrypted_email, decrypted_password
+
         # POST로 받은 암호화된 email&pw - base64 인코딩 str
         encrypted_email = request.form['encrypted_email']
         encrypted_password = request.form['encrypted_password']
@@ -214,12 +210,13 @@ def login():
 
 @app.route("/api/logout", methods=["POST"])
 def logout():
-    global imap_connection, user_email
+    global imap_connection, user_email, server_name, decrypted_email, decrypted_password
     print(f"IMAP: {imap_connection}")
     imap_email_reader.logout_imap(imap_connection)
     imap_connection = None
     user_email = None
-    return '', 200
+    server_name = decrypted_email = decrypted_password = None
+    return jsonify({"status": "success", "message": "Logged out successfully."}), 200
 
 
 if __name__ == '__main__':

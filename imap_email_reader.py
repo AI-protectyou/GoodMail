@@ -3,7 +3,7 @@ import email
 from email.header import decode_header
 from bs4 import BeautifulSoup
 import re
-
+import chardet
 def extract_text_from_html(html_content):
     if html_content:
         if isinstance(html_content, bytes):
@@ -31,22 +31,25 @@ def decode_mime_words(s):
                 decoded_string += word.decode(encoding)
             except (UnicodeDecodeError, LookupError) as e:
                 print(f"디코딩 오류: {s} (encoding: {encoding}, error: {e})")
-                decoded_string += word.decode('utf-8', errors='replace')
+                # 더 많은 인코딩 시도
+                try:
+                    decoded_string += word.decode('utf-8', errors='replace')
+                except UnicodeDecodeError:
+                    decoded_string += word.decode('iso-8859-1', errors='replace')
         else:
             decoded_string += word
     return decoded_string
 
-
 def decode_payload(part):
     payload = part.get_payload(decode=True)
     if payload is not None:
-        for encoding in ['utf-8', 'iso-8859-1', 'euc-kr', 'cp949']:
+        for encoding in ['utf-8', 'iso-8859-1', 'euc-kr', 'cp949', 'utf-16', 'utf-32']:
             try:
                 return payload.decode(encoding)
             except (UnicodeDecodeError, LookupError):
                 continue
         print("모든 디코딩 시도 실패, 원시 데이터 반환")
-        return payload.decode('utf-8', errors='replace')
+        return payload.decode('utf-8', errors='replace')  # 기본적으로 utf-8로 반환
     return ""
 
 
@@ -69,7 +72,7 @@ def get_email_body(msg):
 
 def login_to_imap(imap_server, username, password):
     try:
-        imap = imaplib.IMAP4_SSL(imap_server, port=993)
+        imap = imaplib.IMAP4_SSL(imap_server, port=993, timeout=60)
         status, response = imap.login(username, password)
         if status == 'OK':
             return imap
@@ -78,6 +81,9 @@ def login_to_imap(imap_server, username, password):
             return None
     except imaplib.IMAP4.error as e:
         print(f"IMAP 로그인 오류: {e}")
+        return None
+    except Exception as e:
+        print(f"오류 : {e}")
         return None
 
 
@@ -121,10 +127,10 @@ def read_email(imap):
                 from_ = decode_mime_words(email_message["From"])
                 sender, sender_email = extract_sender_name_and_email(from_)
                 date = email_message["Date"]
-                body_content = get_email_body(email_message)
-
-                if body_content.strip():
-                    body_content = extract_text_from_html(body_content)
+                html_content = get_email_body(email_message)
+                body_content = ""
+                if html_content.strip():
+                    body_content = extract_text_from_html(html_content)
 
                 emails.append({
                     "uid": email_uid.decode(),
@@ -132,19 +138,22 @@ def read_email(imap):
                     "sender": sender,
                     "sender_email": sender_email,
                     "date": date,
-                    "body": body_content
+                    "body": body_content,
+                    "html_body": html_content
                 })
+
+
     except (imaplib.IMAP4.error, Exception) as e:
         print(f"이메일 읽기 오류: {e}")
 
     return emails
 
 
-# 테스트 실행 부분 (예: main 함수 안에서)
+"""# 테스트 실행 부분 (예: main 함수 안에서)
 if __name__ == "__main__":
     imap_server = "imap.naver.com"
-    username = "tjguswn02@naver.com"
-    password = "dnltodcjs02~!"  # 비밀번호는 보안상 코드에 하드코딩하지 마세요!
+    username = ""
+    password = ""  # 비밀번호는 보안상 코드에 하드코딩하지 마세요!
 
     imap_connection = login_to_imap(imap_server, username, password)
 
@@ -162,4 +171,4 @@ if __name__ == "__main__":
             print('*' * 50)
         logout_imap(imap_connection)
     else:
-        print("로그인 실패!")
+        print("로그인 실패!")"""

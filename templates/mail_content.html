@@ -12,8 +12,8 @@
 <body>
     <header id="logo_header">
         <div class="userEmail">
-            <div id="userEmail"> USER Email </div>
-            <button></button>
+            <div id="userEmail">{{ user_email }}</div>
+            <button id="logoutButton" title="로그아웃"></button>
         </div>
         <div class="logo_search">
             <img id="medium_logo" src="../static/images/logo.png">
@@ -23,9 +23,12 @@
             </div>
         </div>
     </header>
-    <section id="mail_content">
+    <section class="page_body" id="mail_content">
         <header>
-            <h4>메일 제목<br>두 줄</h4>
+            <h4>
+                <input type="button" title="목록으로 돌아가기" id="back">
+                메일 제목<br>두 줄
+            </h4>
             <div id="mail_detail">
                 <div id="sender">
                     <span class="mail_detail_elements">

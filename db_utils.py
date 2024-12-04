@@ -17,18 +17,20 @@ def create_table():
         sender TEXT NOT NULL,
         sender_email TEXT NOT NULL,
         date TEXT NOT NULL,
-        body TEXT
+        body TEXT,
+        html_body TEXT,
+        spam INTEGER
     )
     ''')
     conn.commit()
     conn.close()
 
 # 이메일 삽입 함수
-def insert_email(uid, subject, sender, sender_email, date, body):
+def insert_email(uid, subject, sender, sender_email, date, body, html_body, spam=None):
     conn = get_db_connection()
     conn.execute('''
-    INSERT INTO emails (uid, subject, sender, sender_email, date, body)
-    VALUES (?, ?, ?, ?, ?, ?)
-    ''', (uid, subject, sender, sender_email, date, body))
+    INSERT INTO emails (uid, subject, sender, sender_email, date, body, html_body, spam)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (uid, subject, sender, sender_email, date, body, html_body, spam))
     conn.commit()
     conn.close()
