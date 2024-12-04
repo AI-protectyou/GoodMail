@@ -28,6 +28,22 @@ def home():
 def mailbox():
     return render_template("mail_list.html", user_email=user_email)
 
+@app.route("/api/content/<int:id>")
+def mail_content(id):
+    # 데이터베이스 연결 및 데이터 가져오기
+    conn = get_db_connection()
+    email_data = conn.execute('SELECT subject, sender, sender_email, date, html_body, spam FROM emails WHERE id = ?', (id,)).fetchone()
+    conn.close()
+
+    if not email_data:
+        return jsonify({"status": "error", "message": "Email not found."}), 404
+
+    # 데이터를 딕셔너리로 변환하여 템플릿에 전달
+    email_dict = dict(email_data)
+
+    # JSON 데이터와 렌더링된 템플릿을 함께 반환
+    return render_template("mail_content.html", user_email=user_email, email=email_dict)
+
 @app.route("/api/mail", methods=["GET"])
 def show_mail():
     # db에 있는 내용 다 가져오기
@@ -40,8 +56,7 @@ def show_mail():
 
     return jsonify({"status": "success", "emails": [dict(email) for email in emails]})
 
-@app.route("/api/get_mail", methods=["GET"])
-# 이메일을 DB에 갱신하는 함수
+@app.route("/api/get_mail", methods=["GET"]) ## api 이름 바꾸기
 def fetch_emails():
     print("Fetching emails...")
     global imap_connection
@@ -144,7 +159,6 @@ def filter(emails):
 
         email['spam'] = int(spam_prediction) # 스팸 예측값을 이메일 정보에 추가
     return emails
-
 
 def predict_spam_email(combined_text):
     email_vector = tfidf_vectorizer.transform([combined_text])
