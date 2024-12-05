@@ -32,7 +32,16 @@ def mailbox():
 def mail_content(id):
     # 데이터베이스 연결 및 데이터 가져오기
     conn = get_db_connection()
-    email_data = conn.execute('SELECT subject, sender, sender_email, date, html_body, spam FROM emails WHERE id = ?', (id,)).fetchone()
+    if conn is None:
+        return jsonify({"status": "error", "message": "Database connection failed"}), 500
+
+    try:
+        email_data = conn.execute(
+            'SELECT subject, sender, sender_email, date, html_body, spam FROM emails WHERE id = ?',
+            (id,)
+        ).fetchone()
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Database query failed: {str(e)}"}), 500
     conn.close()
 
     if not email_data:
@@ -40,9 +49,11 @@ def mail_content(id):
 
     # 데이터를 딕셔너리로 변환하여 템플릿에 전달
     email_dict = dict(email_data)
-
-    # JSON 데이터와 렌더링된 템플릿을 함께 반환
-    return render_template("mail_content.html", user_email=user_email, email=email_dict)
+    print(email_dict)
+    try:
+        return render_template("mail_content.html", user_email=user_email, email=email_dict)
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Template rendering failed: {str(e)}"}), 500
 
 @app.route("/api/mail", methods=["GET"])
 def show_mail():
