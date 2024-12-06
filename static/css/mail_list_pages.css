@@ -23,6 +23,47 @@ body > * {
     margin: 0 30px;
 }
 
+#overlay {
+    margin: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+
+    cursor: wait;
+}
+
+#loading_text {
+    margin: 0;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 220px;
+    height: 3%;
+    background-color: #ececec;
+
+    font-family: 'Pretendard', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    z-index: 1000;
+    cursor: wait;
+}
+
+#overlay.hidden,
+#loading_text.hidden {
+    display: none;
+}
+
 #logo_header {
     position: relative;
     padding: 10px 20px 0;
@@ -238,20 +279,39 @@ nav * ul input[type="button"]:hover {
     line-height: 1.2;
 }
 
-#mail .sender {
-    width: 35%;
+#mails .sender {
+    width: 20%;
 }
 
 #mails .subject {
-    width: 54%;
+    width: 50%;
 
     border-width: 0 0.1px;
     border-style: solid;
     border-color: #A0A1AD;
 }
 
-#mail .date {
+#mails .date {
+    width: 20%;
+
+    border-width: 0 0.1px 0 0;
+    border-style: solid;
+    border-color: #A0A1AD;
+}
+
+#mails .isSpam {
     width: 10%;
+
+    display: flex;
+    justify-content: center;
+}
+
+#mails .noSpam {
+    color: #364abe;
+}
+
+#mails .yesSpam {
+    color: #b43333;
 }
 
 #mail_list_paging {
@@ -319,9 +379,13 @@ nav * ul input[type="button"]:hover {
 /* mail_content */
 /* 메일 본문 페이지 */
 #mail_content {
+    height: 100%;
     display: grid;
-    grid-template-rows: 120px auto;
+    position: relative;
+    grid-template-rows: 140px 1fr;
     background: #FCFCFC;
+    overflow-y: hidden;
+
 }
 
 #mail_content > * {
@@ -330,36 +394,44 @@ nav * ul input[type="button"]:hover {
 }
 
 #mail_content #back {
-    position: absolute;
+    position: relative;
     width: 25px;
     height: 25px;
-    top: 160px;
-    left: 65px;
+    left: -30px;
 
     background-image: url('../images/back.png');
     background-size: 90%;
 }
 
 #mail_content header {
+    height: 90%;
+    display: grid;
+    grid-template-rows: 35% 65%;
     border-bottom: 0.5px solid #A0A1AD;
     align-items: center;
 }
 
 #mail_detail {
+    width: 100%;
+    height: 100%;
     display: grid;
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: 40% 40%;
     grid-template-columns: 1fr 1fr;
+    align-items: center;
     gap: 5px;
 }
 
 #mail_content * h4 {
     width: 100%;
-    height: 45%;
-    margin: 0 0 5px 0;
+    height: 100%;
+    margin: 5px 0 0 0;
+    display: grid;
+    grid-template-columns: 0px 1fr;
     color: #595A66;
     font-weight: 600;
     font-size: 16px;
-    align-content: center;
+    line-height: 100%;
+    align-items: center;
 }
 
 .mail_detail_elements {
@@ -376,6 +448,8 @@ nav * ul input[type="button"]:hover {
     background: #FCFCFC;
     font-size: 11px;
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
     color: #A0A1AD;
     border: 1px solid #A0A1AD;
     box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
@@ -388,8 +462,14 @@ nav * ul input[type="button"]:hover {
     border: 0;
 }
 
-#mail_text {
-    padding-top: 25px;
+#mail_body {
+    position: relative;
+    padding: 25px 10px 10px 15px;
     font-size: 15px;
     color: #595A66;
+
+    overflow: auto;
+    max-width: 100%;
+    max-height: 100%;
+    box-sizing: border-box;
 }

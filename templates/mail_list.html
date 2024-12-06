@@ -10,6 +10,9 @@
 </head>
 
 <body>
+  <!-- 로딩 오버레이 영역 -->
+  <div id="overlay" class="hidden"></div>
+  <div id="loading_text" class="hidden">서버 응답을 기다리는 중입니다...</div>
   <!-- 로고 서치 영역 -->
   <header id="logo_header">
     <div class="userEmail">
@@ -50,7 +53,7 @@
           <input type="button" id="get_mail" value="전체 메일 보기" />
         </ul>
         <ul>
-          <input type="button" id="filtering" value="AI 필터링 실행" />
+          <input type="button" id="filtering" value="정상 메일만 보기" />
         </ul>
       </div>
     </nav>
@@ -79,12 +82,30 @@
   let mnum = 20;
   let pmax;
 
+  //로딩 상태 설정
+  function Set_loading_state(show) {
+    const overlay = document.querySelector("#overlay");
+    const loading_text = document.querySelector("#loading_text");
 
+    if(show) {
+      console.log("show");
+      overlay.classList.remove("hidden");
+      loading_text.classList.remove("hidden");
+    } else {
+      console.log("hidden");
+      overlay.classList.add("hidden");
+      loading_text.classList.add("hidden");
+    }
+  }
 
   //메일 정렬 후 페이지에 출력하기
-  function Print_emails(sort_key, sort_order) {
+  function Print_emails(splitedEmails, sort_key, sort_order) {
     let emailsC;
     let splitedEmailsC = splitedEmails.slice();
+    pmax = splitedEmails.length;
+    if(pmax < pnum) {
+      pnum = pmax;
+    }
     if (splitedEmailsC.length !== 0) {
       if (sort_key === 'chronological') {
         if (sort_order === 'descending') {
@@ -92,7 +113,9 @@
           emailsC = splitedEmails[pnum-1];
         } else if (sort_order === 'ascending') {
           //default 리스트 순서 뒤집기
-          splitedEmailsC.reverse();
+          emailsC = splitedEmailsC.flat();
+          emailsC.reverse();
+          splitedEmailsC = Split_list(emailsC);
           emailsC = splitedEmailsC[pnum-1];
         }
       } else if (sort_key === 'alphabetical') {
@@ -112,7 +135,10 @@
         const subject = document.createElement('span');
         const sender = document.createElement('span');
         const date = document.createElement('span');
+        const isSpam = document.createElement('span');
 
+        div.setAttribute('class', 'mail');
+        div.setAttribute('id', email.id);
         subject.textContent = email.subject;
         subject.setAttribute('class', 'subject');
         sender.textContent = `${email.sender}:`;
@@ -121,11 +147,15 @@
         sender.setAttribute('class', 'sender');
         date.textContent = email.date;
         date.setAttribute('class', 'date');
+        if(email.spam === 0) {
+          isSpam.textContent = "정상 메일";
+          isSpam.classList.add('isSpam', 'noSpam');
+        } else {
+          isSpam.textContent = "스팸 의심 메일";
+          isSpam.classList.add('isSpam', 'yesSpam');
+        }
 
-        div.append(sender, subject, date);
-
-        console.log(subject);
-        console.log(div);
+        div.append(sender, subject, date, isSpam);
 
         document.querySelector('#mails').appendChild(div);
       })
@@ -137,6 +167,7 @@
 
   //db에서 메일 목록 가져오기
   function Fetch_emails(sort_key, sort_order) {
+
     fetch('/api/mail', {
       method: 'GET'
     })
@@ -147,8 +178,9 @@
         return response.json()
       })
       .then(data => {
+        console.log(data);
         splitedEmails = Split_list(data.emails);
-        Print_emails(sort_key, sort_order);
+        Print_emails(splitedEmails, sort_key, sort_order);
       })
       .catch(error => {
         console.error('에러 발생:', error);
@@ -156,13 +188,18 @@
       });
   }
 
-  //db 갱신하고 db 모든 메일 목록 가져오기
+  //db 갱신하고 db 모든 메일 목록 가져오기 (로딩 유)
   function Fetch_updated_emails(sort_key, sort_order) {
+    Set_loading_state(true);
     fetch('/api/get_mail', {
       method: 'GET'
     })
       .then(response => {
-        if (!response.ok) {
+        console.log(response);
+        if (response === 401) {
+          alert("세션이 만료되었습니다. 다시 로그인해 주세요.");
+          window.location.href = "/";
+        } else if (!response.ok) {
           throw new Error('메일 갱신 실패!')
         }
         return response.json()
@@ -172,42 +209,64 @@
         if (data.status === "success") {
           Fetch_emails(sort_key, sort_order);
         } else {
-          alert('IMAP 커넥션 오류 발생!');
+          alert('IMAP 커넥션 오류 발생! 다시 로그인해 주세요.');
+          window.location.href = "/";
         }
       })
       .catch(error => {
         console.error('에러 발생:', error);
         alert('메일 갱신 실패!');
+      })
+      .finally (() => {
+        Set_loading_state(false);
       });
   }
 
   //db에서 AI 필터링된 메일 목록 가져오기
-  function Fetch_filtered_emails(sort_key, sort_order) {
+  function Fetch_filtered_emails(splitedEmails, sort_key, sort_order) {
     fetch('/api/filter', {
-      method: 'GET'
+      method: 'GET',
+      headers: {
+        'Content-Type' : 'application/json'
+      }
     })
       .then(response => {
         if (!response.ok) {
-          throw new Error('필터링된 메일 불러오기 실패!')
+          throw new Error('웹 서버 응답 오류')
         }
         return response.json()
       })
       .then(data => {
         splitedEmails = Split_list(data.emails);
-        Print_emails(sort_key, sort_order);
+        Print_emails(splitedEmails, sort_key, sort_order);
       })
       .catch(error => {
         console.error('에러 발생:', error);
-        alert('필터링된 메일 불러오기 실패!');
+        alert('에러 발생!');
+      });
+  }
+
+  //로그아웃
+  function Fetch_logout() {
+    fetch('/api/logout', {
+      method: 'POST'
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('로그아웃 실패!');
+        }
+        window.location.href = '/login';
+      })
+      .catch(error => {
+        console.error('에러 발생:', error);
+        alert('로그아웃 실패!');
       });
   }
 
   //페이지 용량에 맞게 리스트 나누기
   function Split_list(emails) {
     let slicedEmails = [];
-    pmax = 0;
     for(let i=0; i < emails.length; i += mnum) {
-      pmax++;
       if(i + mnum >= emails.length) {
         slicedEmails.push(emails.slice(i));
         break;
@@ -246,7 +305,7 @@
 
   //페이지에 저장된 메일 목록 출력하는 객체
   const show_mail = async () => {
-    Print_emails(document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
+    Print_emails(splitedEmails, document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
   };
 
   //db 갱신하고 정렬된 메일 목록 받아서 출력하는 객체
@@ -273,13 +332,46 @@
   //전체 메일 보기 버튼 클릭
   document.getElementById('get_mail').addEventListener('click', () => {
     console.log('전체 메일 보기 button click');
-    show_updated_mail();
+    show_mail();
   });
 
   //AI 필터링 실행 버튼 클릭
   document.querySelector('#filtering').addEventListener('click', () => {
     console.log('AI 필터링 실행 button click');
-    Fetch_filtered_emails(document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
+    Fetch_filtered_emails(splitedEmails, document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
+  });
+
+  //메일 클릭
+  document.querySelector('#mails').addEventListener('click', (evt) => {
+    let id;
+    if(evt.target.classList.contains("mail")) {
+      id = evt.target.id;
+    } else {
+      id = evt.target.parentNode.id;
+    }
+    console.log(id);
+    fetch(`/api/content/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type' : 'application/json'
+      }
+    })
+    .then(response => {
+      if(!response.ok) {
+        if(response === 404) {
+          throw new Error("이메일이 존재하지 않습니다.");
+          return response.json();
+        }
+        throw new Error("서버 응답 오류!");
+        return response.json();
+      }
+    })
+    .then(data => {
+      window.location.href = `/api/content/${id}`;
+    })
+    .catch(error => {
+      alert('에러 발생!');
+    });
   });
 
   //메일 검색
@@ -287,16 +379,20 @@
     let query = evt.target.value;
     console.log(evt);
     if (query.length > 0) {
-      const splitedEmailsC = splitedEmails.filter(email =>
+      const emails = splitedEmails.flat();
+      let emailsC = emails.filter(email =>
         email.subject.includes(query) ||
           email.sender_email.includes(query) ||
           email.sender.includes(query)
       );
       console.log(query);
-      if (splitedEmailsC.length > 0) {
+      console.log(emailsC);
+      if (emailsC.length > 0) {
         console.log(emailsC);
-        Print_emails(document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
+        console.log(Split_list(emailsC));
+        Print_emails(Split_list(emailsC), document.querySelector('#sort_key').value, document.querySelector('#sort_order').value);
       } else {
+        document.querySelector('.text').textContent = `0 / 0 페이지`;
         document.querySelector('#mails').innerHTML = '';
       }
     } else {
@@ -321,20 +417,12 @@
 
   //로그아웃
   document.querySelector("#logoutButton").addEventListener('click', function () {
-    console.log('로그아웃 눌림')
-    fetch('/api/logout', {
-      method: 'POST'
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('로그아웃 실패!');
-        }
-        window.location.href = '/login';
-      })
-      .catch(error => {
-        console.error('에러 발생:', error);
-        alert('로그아웃 실패!');
-      })
+    Fetch_logout();
+  })
+
+  //돌아왔을 때
+  window.addEventListener('load', () => {
+
   })
 </script>
 

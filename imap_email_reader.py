@@ -147,28 +147,3 @@ def read_email(imap):
         print(f"이메일 읽기 오류: {e}")
 
     return emails
-
-
-"""# 테스트 실행 부분 (예: main 함수 안에서)
-if __name__ == "__main__":
-    imap_server = "imap.naver.com"
-    username = ""
-    password = ""  # 비밀번호는 보안상 코드에 하드코딩하지 마세요!
-
-    imap_connection = login_to_imap(imap_server, username, password)
-
-    if imap_connection:
-        print("로그인 성공! 이메일을 불러오는 중...")
-        emails = read_email(imap_connection)
-        print(f"총 {len(emails)}개의 이메일을 읽었습니다.")
-        for email in emails:
-            print(f'uid: {email["uid"]}')
-            print(f'subject: {email["subject"]}')
-            print(f'sender: {email["sender"]}')
-            print(f'sender_email: {email["sender_email"]}')
-            print(f'date: {email["date"]}')
-            print(f'body: {email["body"]}')
-            print('*' * 50)
-        logout_imap(imap_connection)
-    else:
-        print("로그인 실패!")"""
