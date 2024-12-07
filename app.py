@@ -1,6 +1,6 @@
 import os
 import time
-from flask import Flask,jsonify, render_template, url_for, request, redirect, session, flash
+from flask import Flask, jsonify, render_template, url_for, request, redirect, session, flash, send_from_directory
 from dotenv import load_dotenv
 import imap_email_reader
 import key_loader
@@ -9,15 +9,34 @@ from db_utils import get_db_connection, insert_email, create_table
 import joblib
 import numpy as np
 from bs4 import BeautifulSoup
+from flask_swagger_ui import get_swaggerui_blueprint
+
+app = Flask(__name__)
+app.secret_key = os.getenv('SECRET_KEY', 'your_default_secret_key')  # .env 파일에서 비밀 키를 가져오거나 기본값을 사용
 
 model = joblib.load('spam_classifier_model.pkl')
 tfidf_vectorizer = joblib.load('vectorizer.pkl')
-app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'your_default_secret_key')  # .env 파일에서 비밀 키를 가져오거나 기본값을 사용
 
 imap_connection = None
 server_name = decrypted_email = decrypted_password = None
 user_email = None
+
+# Swagger 설정
+SWAGGER_URL = '/swagger'  # Swagger UI에 접근할 URL
+API_URL = '/swagger.json'  # Swagger 파일 경로
+
+swaggerui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={
+        'app_name': "이메일 관리 API"
+    }
+)
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
+# Swagger JSON 제공
+@app.route(API_URL)
+def swagger_json():
+    return send_from_directory('.', 'swagger.json')
 
 @app.route("/")
 def home():
@@ -59,15 +78,15 @@ def mail_content(id):
 def show_mail():
     # db에 있는 내용 다 가져오기
     conn = get_db_connection()
-    emails = conn.execute('SELECT * FROM emails ORDER BY id DESC').fetchall()
+    emails = conn.execute('SELECT id, uid, subject, sender, sender_email, date, spam FROM emails ORDER BY id DESC').fetchall()
     conn.close()
 
     if not emails:
-        return jsonify({"status": "success", "emails": [], "message": "No emails found."})
+        return jsonify({"status": "success", "emails": [], "message": "No emails found."}), 204
 
     return jsonify({"status": "success", "emails": [dict(email) for email in emails]})
 
-@app.route("/api/get_mail", methods=["GET"]) ## api 이름 바꾸기
+@app.route("/api/new_mail", methods=["GET"]) ## api 이름 바꾸기
 def fetch_emails():
     print("Fetching emails...")
     global imap_connection
@@ -113,9 +132,9 @@ def fetch_emails():
                 sender=mail.get('sender', 'Unknown Sender'),
                 sender_email=mail.get('sender_email', 'Unknown Email'),
                 date=mail.get('date', 'Unknown Date'),
-                body=mail.get('body', ''),
-                html_body=mail.get('html_body', ''),
-                spam=mail.get('spam')
+                body=mail.get('body', 'No Body'),
+                html_body=mail.get('html_body', 'No HTML Body'),
+                spam=mail.get('spam', 0)
             )
         conn.commit()
         conn.close()
@@ -185,7 +204,7 @@ def get_public_key():
     # 공개키를 PEM 형식으로 반환 (바이트 코드)
     return key_loader.load_public_key().export_key()
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/api/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         global server_name, decrypted_email, decrypted_password
@@ -220,10 +239,9 @@ def login():
             global imap_connection
             imap_connection = imap_email_reader.login_to_imap(server_name, decrypted_email, decrypted_password)
             if imap_connection:
-                print("imap 로그인 성공!!")
                 global user_email
                 user_email = decrypted_email
-                return redirect(url_for('mailbox'))
+                return redirect('/mailbox', code=301)
             else:
                 # 로그인 실패
                 login_fail = '로그인 실패: 아이디 또는 비밀번호가 틀렸습니다.'
@@ -242,7 +260,6 @@ def logout():
     user_email = None
     server_name = decrypted_email = decrypted_password = None
     return jsonify({"status": "success", "message": "Logged out successfully."}), 200
-
 
 if __name__ == '__main__':
     create_table()

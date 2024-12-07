@@ -1,0 +1,314 @@
+{
+        "swagger": "2.0",
+        "info": {
+            "title": "이메일 관리 API",
+            "version": "1.0.0",
+            "description": "이 API는 이메일을 관리할 수 있도록 지원합니다. 주요 기능으로는 이메일 목록 가져오기, 특정 이메일의 내용 조회, 스팸이 아닌 이메일 필터링, IMAP을 통해 새 이메일 가져오기 및 사용자 로그인/로그아웃 기능이 포함됩니다."
+        },
+        "paths": {
+            "/api/mail": {
+                "get": {
+                    "summary": "모든 이메일 가져오기",
+                    "responses": {
+                        "200": {
+                            "description": "이메일 목록",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "example": "success"
+                                    },
+                                    "emails": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": { "type": "integer", "example": 1 },
+                                                "uid": { "type": "string", "example": "12345" },
+                                                "subject": { "type": "string", "example": "안녕하세요, 철수입니다." },
+                                                "sender": { "type": "string", "example": "김철수" },
+                                                "sender_email": { "type": "string", "example": "chulsoo@example.com" },
+                                                "date": { "type": "string", "example": "2024-12-07T15:00:00Z" },
+                                                "spam": { "type": "integer", "example": 0 }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "204": {
+                            "description": "이메일이 없음",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "example": "success"
+                                    },
+                                    "emails": {
+                                        "type": "array",
+                                        "items": {}
+                                    },
+                                    "message": {
+                                        "type": "string",
+                                        "example": "No emails found."
+                                    }
+                                }
+                            }
+                        },
+                        "500": {
+                            "description": "서버 오류 발생 시",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "status": { "type": "string", "example": "error" },
+                                    "message": { "type": "string", "example": "Database query failed." }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/content/{id}": {
+                "get": {
+                    "summary": "ID로 이메일 내용 가져오기",
+                    "parameters": [
+                        {
+                            "name": "id",
+                            "in": "path",
+                            "required": true,
+                            "type": "integer",
+                            "description": "이메일 ID"
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "이메일 내용",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "subject": { "type": "string", "example": "안녕하세요, 철수입니다." },
+                                    "sender": { "type": "string", "example": "김철수" },
+                                    "sender_email": { "type": "string", "example": "chulsoo@example.com" },
+                                    "date": { "type": "string", "example": "2024-12-07T15:00:00Z" },
+                                    "html_body": { "type": "string", "example": "<p>철수가 보낸 이메일의 자세한 내용입니다.</p>" },
+                                    "spam": { "type": "integer", "example": 0 }
+                                }
+                            }
+                        },
+                        "404": {
+                            "description": "해당 id의 이메일을 찾을 수 없음",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "status": { "type": "string", "example": "error" },
+                                    "message": { "type": "string", "example": "Email not found." }
+                                }
+                            }
+                        },
+                        "500": {
+                            "description": "서버 오류",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "status": { "type": "string", "example": "error" },
+                                    "message": { "type": "string", "example": "Database connection failed" }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/new_mail": {
+                "get": {
+                    "summary": "IMAP에서 새 이메일 가져오기",
+                    "responses": {
+                        "200": {
+                            "description": "성공 메시지",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "status": { "type": "string", "example": "success" },
+                                    "message": { "type": "string", "example": "Emails fetched and stored successfully." }
+                                }
+                            }
+                        },
+                        "500": {
+                            "description": "오류 메시지",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "status": { "type": "string", "example": "error" },
+                                    "message": { "type": "string", "example": "Failed to fetch emails." }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/filter": {
+    "get": {
+        "summary": "'스팸'이 아닌 이메일 필터링",
+        "responses": {
+            "200": {
+                "description": "'스팸'이 아닌 이메일 목록",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "status": {
+                            "type": "string",
+                            "example": "success"
+                        },
+                        "emails": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "uid": {
+                                        "type": "string",
+                                        "example": "12345"
+                                    },
+                                    "subject": {
+                                        "type": "string",
+                                        "example": "안녕하세요, 철수입니다."
+                                    },
+                                    "sender": {
+                                        "type": "string",
+                                        "example": "김철수"
+                                    },
+                                    "sender_email": {
+                                        "type": "string",
+                                        "example": "chulsoo@example.com"
+                                    },
+                                    "date": {
+                                        "type": "string",
+                                        "example": "2024-12-07T15:00:00Z"
+                                    },
+                                    "spam": {
+                                        "type": "integer",
+                                        "example": 0
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "500": {
+                "description": "서버 오류 발생 시",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "status": {
+                            "type": "string",
+                            "example": "error"
+                        },
+                        "message": {
+                            "type": "string",
+                            "example": "Error fetching emails."
+                        }
+                    }
+                }
+            }
+        }
+    }
+},
+            "/api/login": {
+                "post": {
+                    "summary": "사용자 로그인",
+                    "parameters": [
+                        {
+                            "name": "encrypted_email",
+                            "in": "formData",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "name": "encrypted_password",
+                            "in": "formData",
+                            "required": true,
+                            "type": "string"
+                        },
+                        {
+                            "name": "service_provider",
+                            "in": "formData",
+                            "required": true,
+                            "type": "string",
+                            "enum": ["NAVER", "DAUM", "GMAIL"]
+                        }
+                    ],
+                    "responses": {
+                        "301": {
+                            "description": "로그인 성공 후 리디렉션",
+                            "headers": {
+                                "Location": {
+                                    "type": "string",
+                                    "description": "로그인 성공 후 사용자가 리디렉션될 경로를 나타내는 URL. 경로는 /mailbox",
+                                    "default": "/mailbox"
+                                }
+                            }
+                        },
+                        "401": {
+                            "description": "로그인 실패 메시지",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "status": { "type": "string", "example": "error" },
+                                    "message": { "type": "string", "example": "로그인 실패: 아이디 또는 비밀번호가 틀렸습니다." }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/api/logout": {
+                "post": {
+                    "summary": "사용자 로그아웃",
+                    "responses": {
+                        "200": {
+                            "description": "로그아웃 성공 메시지",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "status": { "type": "string", "example": "success" },
+                                    "message": { "type": "string", "example": "Logged out successfully." }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "definitions": {
+            "Email": {
+                "type": "object",
+                "properties": {
+                    "subject": { "type": "string" },
+                    "sender": { "type": "string" },
+                    "sender_email": { "type": "string" },
+                    "date": { "type": "string" },
+                    "html_body": { "type": "string" },
+                    "spam": { "type": "integer" }
+                }
+            },
+            "FilteredEmails": {
+                "type": "object",
+                "properties": {
+                    "status": { "type": "string" },
+                    "emails": { "type": "array", "items": { "$ref": "#/definitions/Email" } }
+                }
+            },
+            "Message": {
+                "type": "object",
+                "properties": {
+                    "status": { "type": "string" },
+                    "message": { "type": "string" }
+                }
+            }
+        }
+    }
