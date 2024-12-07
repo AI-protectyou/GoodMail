@@ -191,7 +191,7 @@
   //db 갱신하고 db 모든 메일 목록 가져오기 (로딩 유)
   function Fetch_updated_emails(sort_key, sort_order) {
     Set_loading_state(true);
-    fetch('/api/new_mail', {
+    fetch('/api/new-mail', {
       method: 'GET'
     })
       .then(response => {

@@ -120,7 +120,7 @@
                     }
                 }
             },
-            "/api/new_mail": {
+            "/api/new-mail": {
                 "get": {
                     "summary": "IMAP에서 새 이메일 가져오기",
                     "responses": {

@@ -86,7 +86,7 @@ def show_mail():
 
     return jsonify({"status": "success", "emails": [dict(email) for email in emails]})
 
-@app.route("/api/new_mail", methods=["GET"]) ## api 이름 바꾸기
+@app.route("/api/new-mail", methods=["GET"]) ## api 이름 바꾸기
 def fetch_emails():
     print("Fetching emails...")
     global imap_connection
@@ -127,11 +127,11 @@ def fetch_emails():
 
         for mail in filtered_mails:
             insert_email(
-                uid=mail.get('uid', 'No UID'),
-                subject=mail.get('subject', 'No Subject'),
-                sender=mail.get('sender', 'Unknown Sender'),
-                sender_email=mail.get('sender_email', 'Unknown Email'),
-                date=mail.get('date', 'Unknown Date'),
+                uid=mail.get('uid') or 'No UID',
+                subject=mail.get('subject') or 'No Subject',
+                sender=mail.get('sender') or 'Unknown Sender',
+                sender_email=mail.get('sender_email') or 'Unknown Email',
+                date=mail.get('date') or 'Unknown Date',
                 body=mail.get('body', 'No Body'),
                 html_body=mail.get('html_body', 'No HTML Body'),
                 spam=mail.get('spam', 0)
