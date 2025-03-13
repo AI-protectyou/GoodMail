@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Good Mail 목록</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../static/css/mail_list_pages.css">
+    <link rel="stylesheet" href="../../static/css/pretendard.css">
+</head>
+
+<body>
+    <header id="logo_header">
+        <div class="userEmail">
+            <div id="userEmail">{{ user_email }}</div>
+            <button id="logoutButton" title="로그아웃"></button>
+        </div>
+        <div class="logo_search">
+            <img id="medium_logo" src="../../static/images/logo.png">
+            <div id="search_field">
+                <img src="../../static/images/search.png">
+                <input type="search" placeholder="메일 검색" name="query">
+            </div>
+        </div>
+    </header>
+    <section class="page_body" id="mail_content">
+        <header>
+            <h4>
+                <input type="button" title="목록으로 돌아가기" id="back">
+                {{ email.subject }}
+            </h4>
+            <div id="mail_detail">
+                <div id="sender">
+                    <span class="mail_detail_elements">
+                        보낸사람
+                    </span>
+                    <span class="mail_detail_values">
+                        {{ email.sender }} : {{ email.sender_email }}
+                    </span>
+                </div>
+                <div>
+                    <span class="mail_detail_elements">
+                        수신일자
+                    </span>
+                    <span id="date" class="mail_detail_values">
+                        {{ email.date }}
+                    </span>
+                </div>
+                <div id="receiver">
+                    <span class="mail_detail_elements">
+                        받은사람
+                    </span>
+                    <span class="mail_detail_values">
+                        나 : {{ user_email }}
+                    </span>
+                </div>
+            </div>
+        </header>
+        <div id="mail_body">
+            {{ email.html_body|safe }}
+        </div>
+    </section>
+</body>
+
+<script>
+    //로그아웃 func
+    function Fetch_logout() {
+        fetch('/api/logout', {
+          method: 'POST'
+        })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('로그아웃 실패!');
+            }
+            window.location.href = '/api/login';
+          })
+          .catch(error => {
+            console.error('에러 발생:', error);
+            alert('로그아웃 실패!');
+          });
+    }
+    document.querySelector("body").removeAttribute('style');
+
+    //뒤로가기 버튼 클릭
+    document.querySelector("#back").addEventListener('click', () => {
+        window.history.back();
+    })
+
+    //로그아웃
+    document.querySelector("#logoutButton").addEventListener('click', function () {
+        Fetch_logout();
+      })
+
+    //메일 검색
+    document.querySelector('input[type="search"]').addEventListener('input', evt => {
+
+    });
+
+
+</script>
+
+
+</html>

@@ -1,2 +1,1 @@
-# GoodMail
-Test
+# clean-mail
