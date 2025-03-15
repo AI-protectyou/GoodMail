@@ -2,6 +2,7 @@
 
 ![Image](https://github.com/user-attachments/assets/f81596f3-2156-40bd-b3b1-ac5d141d59cf)
 
-![Image](https://github.com/user-attachments/assets/e6a956dd-6536-4f0a-850b-384431c9c982)
+![Image](https://github.com/user-attachments/assets/39d80a6a-e001-4ec5-b497-4f4fa4cda948)
 
-https://www.youtube.com/watch?v=4EQlk8bNLfk
+[![Video Label](http://img.youtube.com/vi/4EQlk8bNLfk/0.jpg)]
+(https://youtu.be/4EQlk8bNLfk)
